@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Ride {
+  id          String   @id @default(cuid())
+  rideType    String   // bike, car, auto
+  pickup      String
+  destination String
+  pickupLat   Float
+  pickupLng   Float
+  destLat     Float
+  destLng     Float
+  distance    Float
+  fare        Float
+  status      String   @default("completed") // searching, ongoing, completed, cancelled
+  createdAt   DateTime @default(now())
+}
+
+model SOSAlert {
+  id        String   @id @default(cuid())
+  rideId    String?
+  latitude  Float
+  longitude Float
+  message   String   @default("SOS Alert triggered!")
+  createdAt DateTime @default(now())
+}
+
+model SavedItinerary {
+  id          String   @id @default(cuid())
+  city        String
+  title       String
+  days        Int
+  createdAt   DateTime @default(now())
+}
