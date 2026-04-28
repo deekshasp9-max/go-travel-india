@@ -8,25 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
 import {
   MapPin, Navigation, Bike, Car, Clock, Shield, Phone,
   AlertTriangle, Crosshair, Play, Pause, RotateCcw, ChevronRight,
   Star, Route, IndianRupee, Bell, CheckCircle, Loader2
 } from 'lucide-react';
 import { rideRates } from '@/data/mock-data';
-
-const RideMap = dynamic(() => import('./ride-map'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center" style={{ minHeight: '300px' }}>
-      <div className="text-center">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
-        <p className="text-sm text-gray-400 mt-3">Loading map...</p>
-      </div>
-    </div>
-  ),
-});
+import { RideMap } from './ride-map';
 
 // Demo route: Delhi Connaught Place to India Gate
 const DEMO_PICKUP: [number, number] = [28.6315, 77.2167];
