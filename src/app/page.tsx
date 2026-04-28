@@ -11,6 +11,7 @@ import { BusesPage } from '@/components/go-travel/buses-page';
 import { RidesPage } from '@/components/go-travel/rides-page';
 import { RentalsPage } from '@/components/go-travel/rentals-page';
 import { HistoryPage } from '@/components/go-travel/history-page';
+import { ErrorBoundary } from '@/components/go-travel/error-boundary';
 
 export default function GoTravelApp() {
   const { currentPage } = useGoTravelStore();
@@ -42,7 +43,9 @@ export default function GoTravelApp() {
     <div className="min-h-screen flex flex-col bg-gray-50/50">
       <Header />
       <main className="flex-1 pt-4">
-        {renderPage()}
+        <ErrorBoundary>
+          {renderPage()}
+        </ErrorBoundary>
       </main>
       <Footer />
       {/* Spacer for mobile bottom nav */}
