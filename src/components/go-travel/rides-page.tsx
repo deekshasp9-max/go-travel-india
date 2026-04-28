@@ -16,7 +16,17 @@ import {
 } from 'lucide-react';
 import { rideRates } from '@/data/mock-data';
 
-const RideMap = dynamic(() => import('./ride-map'), { ssr: false });
+const RideMap = dynamic(() => import('./ride-map'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center" style={{ minHeight: '300px' }}>
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
+        <p className="text-sm text-gray-400 mt-3">Loading map...</p>
+      </div>
+    </div>
+  ),
+});
 
 // Demo route: Delhi Connaught Place to India Gate
 const DEMO_PICKUP: [number, number] = [28.6315, 77.2167];
