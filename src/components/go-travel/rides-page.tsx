@@ -13,8 +13,20 @@ import {
   AlertTriangle, Crosshair, Play, Pause, RotateCcw, ChevronRight,
   Star, Route, IndianRupee, Bell, CheckCircle, Loader2
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { rideRates } from '@/data/mock-data';
-import { RideMap } from './ride-map';
+
+const RideMap = dynamic(() => import('./ride-map').then(mod => ({ default: mod.RideMap })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl">
+      <div className="text-center">
+        <div className="w-10 h-10 border-[3px] border-emerald-200 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-gray-400 mt-3">Loading map...</p>
+      </div>
+    </div>
+  ),
+});
 
 // Demo route: Delhi Connaught Place to India Gate
 const DEMO_PICKUP: [number, number] = [28.6315, 77.2167];
