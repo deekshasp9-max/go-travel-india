@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useGoTravelStore } from '@/store/go-travel-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Header } from '@/components/go-travel/header';
 import { Footer } from '@/components/go-travel/footer';
 import { HomePage } from '@/components/go-travel/home-page';
@@ -11,10 +13,17 @@ import { BusesPage } from '@/components/go-travel/buses-page';
 import { RidesPage } from '@/components/go-travel/rides-page';
 import { RentalsPage } from '@/components/go-travel/rentals-page';
 import { HistoryPage } from '@/components/go-travel/history-page';
+import { BookingsPage } from '@/components/go-travel/bookings-page';
+import AuthPage from '@/components/go-travel/auth-page';
 import { ErrorBoundary } from '@/components/go-travel/error-boundary';
 
 export default function GoTravelApp() {
   const { currentPage } = useGoTravelStore();
+  const { checkSession } = useAuthStore();
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -34,10 +43,23 @@ export default function GoTravelApp() {
         return <RentalsPage />;
       case 'history':
         return <HistoryPage />;
+      case 'bookings':
+        return <BookingsPage />;
+      case 'auth':
+        return <AuthPage />;
       default:
         return <HomePage />;
     }
   };
+
+  // Auth page has its own layout (full screen, no header/footer)
+  if (currentPage === 'auth') {
+    return (
+      <ErrorBoundary>
+        <AuthPage />
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50/50">

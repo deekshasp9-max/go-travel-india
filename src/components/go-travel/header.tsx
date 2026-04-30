@@ -1,13 +1,16 @@
 'use client';
 
 import { useGoTravelStore, type Page } from '@/store/go-travel-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Plane, Train, Bus, Bike, Car, Building2, History,
-  Menu, X, Shield, ChevronDown, Home, Compass, CreditCard, Star
+  Menu, X, Shield, ChevronDown, Home, Compass, CreditCard,
+  Star, LogIn, LogOut, User, Ticket, CircleUser
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,6 +27,7 @@ const navItems: { id: Page; label: string; icon: React.ReactNode; mobileOnly?: b
 
 export function Header() {
   const { currentPage, setCurrentPage } = useGoTravelStore();
+  const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [travelDropdown, setTravelDropdown] = useState(false);
 
@@ -33,6 +37,13 @@ export function Header() {
     setTravelDropdown(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleLogout = () => {
+    logout();
+    navigate('home');
+  };
+
+  const userInitial = user?.name?.charAt(0).toUpperCase() || 'U';
 
   return (
     <>
@@ -73,7 +84,7 @@ export function Header() {
                 <button
                   onClick={() => setTravelDropdown(!travelDropdown)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
-                    ['flights', 'trains', 'buses'].includes(currentPage)
+                    ['flights', 'trains', 'buses', 'rentals', 'history'].includes(currentPage)
                       ? 'bg-emerald-50 text-emerald-700 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
@@ -112,12 +123,51 @@ export function Header() {
               </div>
             </nav>
 
-            {/* Right side */}
+            {/* Right side: Auth + Bookings */}
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="hidden sm:flex items-center gap-1 border-emerald-200 text-emerald-700 bg-emerald-50 px-2.5 py-1">
                 <Shield className="w-3 h-3" />
                 Women&apos;s Safety
               </Badge>
+
+              {user ? (
+                <div className="hidden lg:flex items-center gap-2">
+                  {/* My Bookings button */}
+                  <button
+                    onClick={() => navigate('bookings')}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      currentPage === 'bookings'
+                        ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Ticket className="w-4 h-4" />
+                    Bookings
+                  </button>
+
+                  {/* User avatar & dropdown */}
+                  <div className="flex items-center gap-2 ml-1 pl-2 border-l border-gray-200">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs font-bold">
+                        {userInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">{user.name}</span>
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-gray-400 hover:text-red-500" title="Logout">
+                      <LogOut className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => navigate('auth')}
+                  className="hidden lg:flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 h-9 text-sm font-semibold shadow-sm"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login / Sign Up
+                </Button>
+              )}
+
               {/* Mobile menu */}
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild className="lg:hidden">
@@ -132,8 +182,17 @@ export function Header() {
                       <span className="text-lg font-bold">Go Travel</span>
                     </div>
                     <p className="text-xs text-emerald-100 mt-1">India&apos;s Travel Companion</p>
+                    {user && (
+                      <div className="flex items-center gap-2 mt-3 bg-white/15 rounded-lg px-3 py-2">
+                        <CircleUser className="w-5 h-5" />
+                        <div>
+                          <p className="text-sm font-semibold">{user.name}</p>
+                          <p className="text-[10px] text-emerald-100">{user.email}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <nav className="p-2">
+                  <nav className="p-2 overflow-y-auto max-h-[calc(100vh-200px)]">
                     {navItems.map((item) => (
                       <button
                         key={item.id}
@@ -148,6 +207,42 @@ export function Header() {
                         {item.label}
                       </button>
                     ))}
+
+                    {/* Bookings in mobile menu */}
+                    {user && (
+                      <button
+                        onClick={() => navigate('bookings')}
+                        className={`w-full px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 transition-all mb-1 ${
+                          currentPage === 'bookings'
+                            ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <Ticket className="w-4 h-4" />
+                        My Bookings
+                      </button>
+                    )}
+
+                    {/* Auth in mobile menu */}
+                    <div className="border-t mt-2 pt-2">
+                      {user ? (
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 text-red-500 hover:bg-red-50 transition-all"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => navigate('auth')}
+                          className="w-full px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 text-emerald-600 hover:bg-emerald-50 transition-all"
+                        >
+                          <LogIn className="w-4 h-4" />
+                          Login / Sign Up
+                        </button>
+                      )}
+                    </div>
                   </nav>
                 </SheetContent>
               </Sheet>
