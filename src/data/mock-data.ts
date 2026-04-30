@@ -708,12 +708,12 @@ export const rentalVehicles: RentalVehicle[] = [
   { id: "rv12", name: "TVS Jupiter", type: "scooter", image: "🛵", location: "Varanasi", pricePerDay: 300, pricePerHour: 45, rating: 4.0, fuelType: "Petrol", transmission: "Automatic", seats: 2, available: true },
 ];
 
-// ============ RIDE FARE RATES ============
+// ============ RIDE FARE RATES (Ola/Uber realistic Bengaluru pricing) ============
 export const rideRates = {
-  bike: { baseFare: 30, perKm: 10, name: "Bike", icon: "🏍️", eta: "3-5 min" },
-  auto: { baseFare: 50, perKm: 18, name: "Auto", icon: "🛺", eta: "5-8 min" },
-  car: { baseFare: 100, perKm: 22, name: "Car", icon: "🚗", eta: "5-10 min" },
-  carPremium: { baseFare: 150, perKm: 28, name: "Car Premium", icon: "✨", eta: "3-7 min" },
+  bike: { baseFare: 25, perKm: 7, perMin: 1, platformFee: 10, name: "Bike", icon: "🏍️", eta: "3-5 min" },
+  auto: { baseFare: 40, perKm: 15, perMin: 1.5, platformFee: 15, name: "Auto", icon: "🛺", eta: "5-8 min" },
+  car: { baseFare: 75, perKm: 18, perMin: 1.2, platformFee: 20, name: "Car", icon: "🚗", eta: "5-10 min" },
+  carPremium: { baseFare: 125, perKm: 24, perMin: 1.5, platformFee: 25, name: "Sedan Premium", icon: "✨", eta: "3-7 min" },
 };
 
 // ============ INDIAN CITIES FOR SEARCH ============
