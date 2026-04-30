@@ -950,7 +950,7 @@ export function RidesPage() {
       {/* SOS Dialog */}
       <AnimatePresence>
         {sosOpen && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/50 p-4">
             <Card className="max-w-sm w-full border-0 shadow-2xl"><CardContent className="p-6 text-center">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><Shield className="w-10 h-10 text-red-600" /></div>
               <h2 className="text-xl font-extrabold text-red-600">SOS Alert Sent!</h2>
