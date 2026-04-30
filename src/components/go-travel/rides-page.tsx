@@ -130,7 +130,7 @@ function SearchSuggestions({
 
 function RideMap({
   center, pickupCoords, destCoords, driverPos, userLoc,
-  routeCoords, approachCoords,
+  routeCoords, approachCoords, phase,
 }: {
   center: [number, number];
   pickupCoords: [number, number] | null;
@@ -139,13 +139,14 @@ function RideMap({
   userLoc: [number, number] | null;
   routeCoords: [number, number][] | null;
   approachCoords: [number, number][] | null;
+  phase: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [err, setErr] = useState('');
-  const pRef = useRef({ center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords });
+  const pRef = useRef({ center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords, phase });
 
-  useEffect(() => { pRef.current = { center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords }; }, [center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords]);
+  useEffect(() => { pRef.current = { center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords, phase }; }, [center, pickupCoords, destCoords, driverPos, userLoc, routeCoords, approachCoords, phase]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -155,6 +156,7 @@ function RideMap({
     const mk: Record<string, any> = {};
     const pl: Record<string, any> = {};
     let timer: ReturnType<typeof setInterval> | null = null;
+    let userZoomed = false; // tracks if user manually zoomed out
 
     import('leaflet').then((mod) => {
       if (dead) return;
@@ -162,6 +164,12 @@ function RideMap({
       map = L.map(el, { center: pRef.current.center, zoom: 14, zoomControl: false });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(map);
       L.control.zoom({ position: 'topright' }).addTo(map);
+
+      // Listen for user zoom events — if they zoom out below 15, stop auto-tracking
+      map.on('zoomend', () => {
+        if (map.getZoom() < 15) userZoomed = true;
+      });
+
       setTimeout(() => { if (!dead && map) { map.invalidateSize(); setStatus('ready'); } }, 500);
 
       timer = setInterval(() => {
@@ -205,15 +213,25 @@ function RideMap({
             else pl['ap'] = L.polyline(p.approachCoords, { color: '#7c3aed', weight: 4, opacity: 0.7, dashArray: '10,10' }).addTo(map);
           } else if (pl['ap']) { pl['ap'].remove(); delete pl['ap']; }
 
-          // Fit bounds
-          const allPoints: [number, number][] = [];
-          if (p.driverPos) allPoints.push(p.driverPos);
-          if (p.pickupCoords) allPoints.push(p.pickupCoords);
-          if (p.destCoords) allPoints.push(p.destCoords);
-          if (allPoints.length >= 2) {
-            try { map.fitBounds(L.latLngBounds(allPoints), { padding: [60, 60], maxZoom: 15 }); } catch (_) {}
-          } else if (p.pickupCoords) { map.setView(p.pickupCoords, 15); }
-          else if (p.userLoc) { map.setView(p.userLoc, 15); }
+          // ── Camera control: follow vehicle during ride, fit bounds otherwise ──
+          const isRiding = p.phase === 'riding' || p.phase === 'approaching';
+
+          if (isRiding && p.driverPos && !userZoomed) {
+            // Zoom to vehicle and follow it smoothly
+            map.setView(p.driverPos, 16, { animate: true, duration: 0.3 });
+          } else if (!isRiding) {
+            // Reset userZoomed when not in riding phase
+            userZoomed = false;
+            // Fit bounds for all other phases
+            const allPoints: [number, number][] = [];
+            if (p.driverPos) allPoints.push(p.driverPos);
+            if (p.pickupCoords) allPoints.push(p.pickupCoords);
+            if (p.destCoords) allPoints.push(p.destCoords);
+            if (allPoints.length >= 2) {
+              try { map.fitBounds(L.latLngBounds(allPoints), { padding: [60, 60], maxZoom: 15 }); } catch (_) {}
+            } else if (p.pickupCoords) { map.setView(p.pickupCoords, 15); }
+            else if (p.userLoc) { map.setView(p.userLoc, 15); }
+          }
         } catch (e) { /* marker update error */ }
       }, 350);
     }).catch((e: any) => { if (!dead) { setStatus('error'); setErr(e?.message || 'Failed'); } });
@@ -903,6 +921,7 @@ export function RidesPage() {
               userLoc={userLoc}
               routeCoords={routeCoords}
               approachCoords={approachCoords}
+              phase={phase}
             />
             {/* GPS Loading Overlay */}
             {gpsLoading && (

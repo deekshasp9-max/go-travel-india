@@ -710,10 +710,10 @@ export const rentalVehicles: RentalVehicle[] = [
 
 // ============ RIDE FARE RATES ============
 export const rideRates = {
-  bike: { baseFare: 20, perKm: 7, name: "Bike", icon: "🏍️", eta: "3-5 min" },
-  auto: { baseFare: 30, perKm: 12, name: "Auto", icon: "🛺", eta: "5-8 min" },
-  car: { baseFare: 50, perKm: 15, name: "Car", icon: "🚗", eta: "5-10 min" },
-  carPremium: { baseFare: 80, perKm: 20, name: "Car Premium", icon: "✨", eta: "3-7 min" },
+  bike: { baseFare: 30, perKm: 10, name: "Bike", icon: "🏍️", eta: "3-5 min" },
+  auto: { baseFare: 50, perKm: 18, name: "Auto", icon: "🛺", eta: "5-8 min" },
+  car: { baseFare: 100, perKm: 22, name: "Car", icon: "🚗", eta: "5-10 min" },
+  carPremium: { baseFare: 150, perKm: 28, name: "Car Premium", icon: "✨", eta: "3-7 min" },
 };
 
 // ============ INDIAN CITIES FOR SEARCH ============
