@@ -717,10 +717,168 @@ export const rideRates = {
 };
 
 // ============ INDIAN CITIES FOR SEARCH ============
-export const indianCities = [
-  "Delhi", "Mumbai", "Bengaluru", "Chennai", "Kolkata", "Hyderabad",
-  "Pune", "Jaipur", "Lucknow", "Ahmedabad", "Chandigarh", "Kochi",
-  "Goa", "Manali", "Shimla", "Rishikesh", "Varanasi", "Agra",
-  "Udaipur", "Munnar", "Ooty", "Darjeeling", "Amritsar", "Leh",
-  "Dharamshala", "Haridwar", "Pushkar", "Jodhpur", "Mysore", "Coorg"
+export interface IndianCity {
+  name: string;
+  state: string;
+  code: string;       // Airport code (e.g. DEL, BOM) — for flights
+  station?: string;   // Railway station code (e.g. NDLS, BCT) — for trains
+}
+
+export const indianCities: IndianCity[] = [
+  // === Major Metro Cities ===
+  { name: "Delhi", state: "Delhi", code: "DEL", station: "NDLS" },
+  { name: "Mumbai", state: "Maharashtra", code: "BOM", station: "BCT" },
+  { name: "Bengaluru", state: "Karnataka", code: "BLR", station: "SBC" },
+  { name: "Chennai", state: "Tamil Nadu", code: "MAA", station: "MAS" },
+  { name: "Kolkata", state: "West Bengal", code: "CCU", station: "HWH" },
+  { name: "Hyderabad", state: "Telangana", code: "HYD", station: "SC" },
+  { name: "Pune", state: "Maharashtra", code: "PNQ", station: "PUNE" },
+
+  // === Union Territories ===
+  { name: "Chandigarh", state: "Chandigarh", code: "IXC", station: "CDG" },
+  { name: "Goa", state: "Goa", code: "GOI", station: "MAO" },
+  { name: "Leh", state: "Ladakh", code: "IXL", station: "LKH" },
+  { name: "Srinagar", state: "Jammu & Kashmir", code: "SXR", station: "SRR" },
+  { name: "Jammu", state: "Jammu & Kashmir", code: "IXJ", station: "JAT" },
+  { name: "Puducherry", state: "Puducherry", code: "PNY", station: "PDY" },
+
+  // === Uttar Pradesh ===
+  { name: "Lucknow", state: "Uttar Pradesh", code: "LKO", station: "LKO" },
+  { name: "Varanasi", state: "Uttar Pradesh", code: "VNS", station: "BSB" },
+  { name: "Agra", state: "Uttar Pradesh", code: "AGR", station: "AGC" },
+  { name: "Prayagraj", state: "Uttar Pradesh", code: "IXD", station: "ALD" },
+  { name: "Kanpur", state: "Uttar Pradesh", code: "KNU", station: "CNB" },
+  { name: "Mathura", state: "Uttar Pradesh", code: "KJH", station: "MTJ" },
+  { name: "Ayodhya", state: "Uttar Pradesh", code: "AYJ", station: "AY" },
+
+  // === Rajasthan ===
+  { name: "Jaipur", state: "Rajasthan", code: "JAI", station: "JP" },
+  { name: "Jodhpur", state: "Rajasthan", code: "JDH", station: "JU" },
+  { name: "Udaipur", state: "Rajasthan", code: "UDR", station: "UDZ" },
+  { name: "Ajmer", state: "Rajasthan", code: "KQH", station: "AII" },
+  { name: "Pushkar", state: "Rajasthan", code: "", station: "PSKT" },
+  { name: "Bikaner", state: "Rajasthan", code: "BKB", station: "BKN" },
+  { name: "Jaisalmer", state: "Rajasthan", code: "JSA", station: "JSM" },
+
+  // === Gujarat ===
+  { name: "Ahmedabad", state: "Gujarat", code: "AMD", station: "ADI" },
+  { name: "Surat", state: "Gujarat", code: "STV", station: "ST" },
+  { name: "Vadodara", state: "Gujarat", code: "BDQ", station: "BRC" },
+  { name: "Rajkot", state: "Gujarat", code: "RAJ", station: "RJT" },
+  { name: "Bhuj", state: "Gujarat", code: "BHJ", station: "BHUJ" },
+
+  // === Maharashtra (beyond Mumbai/Pune) ===
+  { name: "Nagpur", state: "Maharashtra", code: "NAG", station: "NGP" },
+  { name: "Nashik", state: "Maharashtra", code: "ISK", station: "NK" },
+  { name: "Aurangabad", state: "Maharashtra", code: "IXU", station: "AWB" },
+
+  // === Karnataka (beyond Bengaluru) ===
+  { name: "Mysore", state: "Karnataka", code: "MYQ", station: "MYS" },
+  { name: "Mangaluru", state: "Karnataka", code: "IXE", station: "MAJN" },
+  { name: "Hubli", state: "Karnataka", code: "HBX", station: "UBL" },
+
+  // === Tamil Nadu (beyond Chennai) ===
+  { name: "Coimbatore", state: "Tamil Nadu", code: "CJB", station: "CBE" },
+  { name: "Madurai", state: "Tamil Nadu", code: "IXM", station: "MDU" },
+  { name: "Tiruchirappalli", state: "Tamil Nadu", code: "TRZ", station: "TPJ" },
+  { name: "Salem", state: "Tamil Nadu", code: "SXV", station: "SA" },
+  { name: "Ooty", state: "Tamil Nadu", code: "", station: "UAM" },
+
+  // === Kerala ===
+  { name: "Kochi", state: "Kerala", code: "COK", station: "ERS" },
+  { name: "Thiruvananthapuram", state: "Kerala", code: "TRV", station: "TVC" },
+  { name: "Kozhikode", state: "Kerala", code: "CCJ", station: "CLT" },
+  { name: "Munnar", state: "Kerala", code: "", station: "" },
+  { name: "Alleppey", state: "Kerala", code: "", station: "" },
+  { name: "Kovalam", state: "Kerala", code: "", station: "" },
+  { name: "Wayanad", state: "Kerala", code: "", station: "" },
+
+  // === Andhra Pradesh ===
+  { name: "Visakhapatnam", state: "Andhra Pradesh", code: "VTZ", station: "VSKP" },
+  { name: "Vijayawada", state: "Andhra Pradesh", code: "VGA", station: "BZA" },
+  { name: "Tirupati", state: "Andhra Pradesh", code: "TIR", station: "TPTY" },
+
+  // === Telangana (beyond Hyderabad) ===
+  { name: "Warangal", state: "Telangana", code: "", station: "WL" },
+
+  // === Madhya Pradesh ===
+  { name: "Bhopal", state: "Madhya Pradesh", code: "BHO", station: "BPL" },
+  { name: "Indore", state: "Madhya Pradesh", code: "IDR", station: "INDB" },
+  { name: "Jabalpur", state: "Madhya Pradesh", code: "JLR", station: "JBP" },
+  { name: "Gwalior", state: "Madhya Pradesh", code: "GWL", station: "GWL" },
+  { name: "Khajuraho", state: "Madhya Pradesh", code: "HJR", station: "KURJ" },
+
+  // === Bihar ===
+  { name: "Patna", state: "Bihar", code: "PAT", station: "PNBE" },
+  { name: "Gaya", state: "Bihar", code: "GAY", station: "GAYA" },
+  { name: "Bodh Gaya", state: "Bihar", code: "GAY", station: "GAYA" },
+
+  // === Northeast India ===
+  { name: "Guwahati", state: "Assam", code: "GAU", station: "GHY" },
+  { name: "Dispur", state: "Assam", code: "", station: "GHY" },
+  { name: "Shillong", state: "Meghalaya", code: "SHL", station: "" },
+  { name: "Imphal", state: "Manipur", code: "IMF", station: "" },
+  { name: "Agartala", state: "Tripura", code: "IXA", station: "" },
+  { name: "Aizawl", state: "Mizoram", code: "AJL", station: "" },
+
+  // === Odisha ===
+  { name: "Bhubaneswar", state: "Odisha", code: "BBI", station: "BBS" },
+  { name: "Puri", state: "Odisha", code: "PURI", station: "PURI" },
+  { name: "Cuttack", state: "Odisha", code: "", station: "CTC" },
+
+  // === West Bengal (beyond Kolkata) ===
+  { name: "Darjeeling", state: "West Bengal", code: "DAI", station: "DJ" },
+  { name: "Siliguri", state: "West Bengal", code: "IXB", station: "SGUJ" },
+  { name: "Durgapur", state: "West Bengal", code: "", station: "DGR" },
+
+  // === Punjab ===
+  { name: "Amritsar", state: "Punjab", code: "ATQ", station: "ASR" },
+  { name: "Ludhiana", state: "Punjab", code: "LUH", station: "LDH" },
+
+  // === Uttarakhand ===
+  { name: "Dehradun", state: "Uttarakhand", code: "DED", station: "DDN" },
+  { name: "Rishikesh", state: "Uttarakhand", code: "", station: "RKSH" },
+  { name: "Haridwar", state: "Uttarakhand", code: "", station: "HW" },
+  { name: "Mussoorie", state: "Uttarakhand", code: "", station: "" },
+  { name: "Nainital", state: "Uttarakhand", code: "", station: "" },
+
+  // === Himachal Pradesh ===
+  { name: "Shimla", state: "Himachal Pradesh", code: "SLV", station: "SML" },
+  { name: "Manali", state: "Himachal Pradesh", code: "KUU", station: "" },
+  { name: "Dharamshala", state: "Himachal Pradesh", code: "DHM", station: "DHARM" },
+  { name: "Kullu", state: "Himachal Pradesh", code: "KUU", station: "KLL" },
+
+  // === Jharkhand ===
+  { name: "Ranchi", state: "Jharkhand", code: "IXR", station: "RNC" },
+  { name: "Jamshedpur", state: "Jharkhand", code: "IXW", station: "TATA" },
+
+  // === Chhattisgarh ===
+  { name: "Raipur", state: "Chhattisgarh", code: "RPR", station: "R" },
+
+  // === Haryana ===
+  { name: "Gurugram", state: "Haryana", code: "", station: "GGN" },
+  { name: "Faridabad", state: "Haryana", code: "", station: "FDB" },
+
+  // === Delhi NCR ===
+  { name: "Noida", state: "Uttar Pradesh", code: "", station: "" },
+  { name: "Ghaziabad", state: "Uttar Pradesh", code: "", station: "GZB" },
+
+  // === Other popular destinations ===
+  { name: "Coorg", state: "Karnataka", code: "", station: "" },
+  { name: "Mount Abu", state: "Rajasthan", code: "", station: "" },
+  { name: "Rishikesh", state: "Uttarakhand", code: "", station: "RKSH" },
+  { name: "Nandankanan", state: "Odisha", code: "", station: "" },
+  { name: "Hampi", state: "Karnataka", code: "", station: "HPT" },
+  { name: "Matheran", state: "Maharashtra", code: "", station: "MAE" },
+  { name: "Mahabaleshwar", state: "Maharashtra", code: "", station: "" },
+  { name: "Lonavala", state: "Maharashtra", code: "", station: "LNL" },
+  { name: "Mount Abu", state: "Rajasthan", code: "", station: "ABR" },
+  { name: "Kodaikanal", state: "Tamil Nadu", code: "", station: "KQN" },
+  { name: "Rameswaram", state: "Tamil Nadu", code: "", station: "RMM" },
+  { name: "Kanyakumari", state: "Tamil Nadu", code: "", station: "CAPE" },
+  { name: "Shirdi", state: "Maharashtra", code: "SAG", station: "SNSI" },
+  { name: "Vaishno Devi", state: "Jammu & Kashmir", code: "", station: "KATRA" },
+  { name: "Auli", state: "Uttarakhand", code: "", station: "" },
+  { name: "Ranikhet", state: "Uttarakhand", code: "", station: "" },
+  { name: "Corbett", state: "Uttarakhand", code: "", station: "RMB" },
 ];

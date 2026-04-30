@@ -4,10 +4,9 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { motion } from 'framer-motion';
-import { Bus, ArrowRight, Clock, Star, ExternalLink, Wifi, Battery, Shield, Wind, Tv, Droplets } from 'lucide-react';
+import { Bus, ArrowRight, Star, ExternalLink, Wifi, Battery, Shield, Wind, Droplets } from 'lucide-react';
 import { buses } from '@/data/mock-data';
+import { CitySearchInput } from '@/components/go-travel/city-search';
 
 const amenityIcons: Record<string, React.ReactNode> = {
   WiFi: <Wifi className="w-3 h-3" />,
@@ -22,9 +21,6 @@ export function BusesPage() {
   const [from, setFrom] = useState('Delhi');
   const [to, setTo] = useState('Manali');
   const [sortBy, setSortBy] = useState<'price' | 'departure' | 'rating'>('price');
-
-  const fromCities = [...new Set(buses.map(b => b.from))];
-  const toCities = [...new Set(buses.map(b => b.to))];
 
   const filtered = useMemo(() => {
     let result = buses.filter(b => {
@@ -61,25 +57,23 @@ export function BusesPage() {
           <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-green-100 mb-1 block">From</label>
-                <Select value={from} onValueChange={setFrom}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {fromCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={from}
+                  onChange={setFrom}
+                  label="From"
+                  placeholder="Search departure city..."
+                />
               </div>
               <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
                 <ArrowRight className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-green-100 mb-1 block">To</label>
-                <Select value={to} onValueChange={setTo}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {toCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={to}
+                  onChange={setTo}
+                  label="To"
+                  placeholder="Search destination city..."
+                />
               </div>
               <div className="w-full sm:w-auto">
                 <label className="text-xs font-semibold text-green-100 mb-1 block">Date</label>
@@ -113,11 +107,10 @@ export function BusesPage() {
       {/* Bus Cards */}
       <div className="space-y-3">
         {filtered.map((bus, i) => (
-          <motion.div
+          <div
             key={bus.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.05 }}
+            className="animate-fade-in-up"
+            style={{ animationDuration: '0.3s', animationDelay: `${i * 0.05}s` }}
           >
             <Card className="hover:shadow-lg transition-all border-gray-100 overflow-hidden">
               <CardContent className="p-4 sm:p-5">
@@ -182,7 +175,7 @@ export function BusesPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 

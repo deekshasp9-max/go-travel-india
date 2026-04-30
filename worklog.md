@@ -64,3 +64,27 @@ Stage Summary:
 - All 12 itinerary cards now show proper images in Explore India
 - Tourism page and payment modal are now React 19 hydration-safe (no framer-motion)
 - Payment flow (UPI, Cards, Net Banking, Wallets, Pay Later, Email Link) was already implemented and works correctly
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Create comprehensive India cities dataset and searchable city selector component
+
+Work Log:
+- Replaced flat `indianCities` string array (30 cities) in `mock-data.ts` with structured `IndianCity` interface and 100+ cities including name, state, airport code, and railway station code
+- Cities cover all major Indian states and union territories: metros, tier-2 cities, hill stations, pilgrimage sites, and tourist destinations
+- Created reusable `CitySearchInput` component (`src/components/go-travel/city-search.tsx`) with search icon, filtered dropdown, city name + state + code badges, click-outside-to-close, keyboard navigation (ArrowUp/Down + Enter + Escape), z-[9999] layering, and CSS animations only (no framer-motion)
+- Updated `buses-page.tsx`: replaced Select components with CitySearchInput, city names as string values, removed `motion.div` → CSS `animate-fade-in-up`
+- Updated `flights-page.tsx`: replaced Select components with CitySearchInput, city values include airport code format `City (CODE)`, removed `motion.div` → CSS animations, cleaned unused imports
+- Updated `trains-page.tsx`: replaced Select components with CitySearchInput, city values include station code format `City (STATION)`, removed `motion.div` → CSS animations, cleaned unused imports
+- All existing functionality preserved: filtering, sorting, result cards, booking links
+- ESLint passes clean, dev server compiles successfully
+
+Stage Summary:
+- Key changes:
+  1. `src/data/mock-data.ts` - New `IndianCity` interface and 100+ cities dataset replacing flat string array
+  2. `src/components/go-travel/city-search.tsx` - New reusable searchable city selector component
+  3. `src/components/go-travel/buses-page.tsx` - Uses CitySearchInput, CSS animations replace framer-motion
+  4. `src/components/go-travel/flights-page.tsx` - Uses CitySearchInput with airport codes, CSS animations replace framer-motion
+  5. `src/components/go-travel/trains-page.tsx` - Uses CitySearchInput with station codes, CSS animations replace framer-motion
+- All three pages are now React 19 hydration-safe (no framer-motion)

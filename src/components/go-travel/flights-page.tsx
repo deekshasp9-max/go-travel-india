@@ -5,15 +5,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { motion } from 'framer-motion';
 import {
-  Plane, ArrowRight, Clock, Star, ExternalLink, Filter,
-  ChevronDown, SortAsc, Users, Luggage
+  Plane, ArrowRight, ExternalLink, Filter,
 } from 'lucide-react';
-import { flights, type Flight } from '@/data/mock-data';
-import { indianCities } from '@/data/mock-data';
+import { flights } from '@/data/mock-data';
+import { indianCities, type IndianCity } from '@/data/mock-data';
+import { CitySearchInput } from '@/components/go-travel/city-search';
+
+function flightCityValue(city: IndianCity): string {
+  if (city.code) return `${city.name} (${city.code})`;
+  return city.name;
+}
 
 export function FlightsPage() {
   const [from, setFrom] = useState('Delhi (DEL)');
@@ -21,9 +24,6 @@ export function FlightsPage() {
   const [sortBy, setSortBy] = useState<'price' | 'departure' | 'duration'>('price');
   const [stops, setStops] = useState<'all' | '0' | '1'>('all');
   const [showFilters, setShowFilters] = useState(false);
-
-  const fromCities = [...new Set(flights.map(f => f.from))];
-  const toCities = [...new Set(flights.map(f => f.to))];
 
   const filtered = useMemo(() => {
     let result = flights.filter(f => {
@@ -73,25 +73,29 @@ export function FlightsPage() {
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-orange-100 mb-1 block">From</label>
-                <Select value={from} onValueChange={setFrom}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {fromCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={from}
+                  onChange={(name) => {
+                    const city = indianCities.find(c => c.name === name);
+                    setFrom(city ? flightCityValue(city) : name);
+                  }}
+                  label="From"
+                  placeholder="Search departure city..."
+                />
               </div>
               <button className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
                 <ArrowRight className="w-4 h-4 text-white" />
               </button>
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-orange-100 mb-1 block">To</label>
-                <Select value={to} onValueChange={setTo}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {toCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={to}
+                  onChange={(name) => {
+                    const city = indianCities.find(c => c.name === name);
+                    setTo(city ? flightCityValue(city) : name);
+                  }}
+                  label="To"
+                  placeholder="Search destination city..."
+                />
               </div>
               <div className="w-full sm:w-auto">
                 <label className="text-xs font-semibold text-orange-100 mb-1 block">Date</label>
@@ -141,11 +145,7 @@ export function FlightsPage() {
       </div>
 
       {showFilters && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          className="mb-4"
-        >
+        <div className="mb-4 animate-fade-in-down" style={{ animationDuration: '0.2s' }}>
           <Card className="p-4">
             <h3 className="text-sm font-semibold mb-3">Stops</h3>
             <div className="flex gap-2">
@@ -166,7 +166,7 @@ export function FlightsPage() {
               ))}
             </div>
           </Card>
-        </motion.div>
+        </div>
       )}
 
       {/* Results Summary */}
@@ -182,11 +182,10 @@ export function FlightsPage() {
       {/* Flight Cards */}
       <div className="space-y-3">
         {filtered.map((flight, i) => (
-          <motion.div
+          <div
             key={flight.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.05 }}
+            className="animate-fade-in-up"
+            style={{ animationDuration: '0.3s', animationDelay: `${i * 0.05}s` }}
           >
             <Card className="hover:shadow-lg transition-all duration-300 border-gray-100 overflow-hidden group">
               <CardContent className="p-4 sm:p-5">
@@ -252,7 +251,7 @@ export function FlightsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 

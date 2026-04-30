@@ -4,19 +4,21 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { motion } from 'framer-motion';
-import { Train, ArrowRight, Clock, ExternalLink, Filter } from 'lucide-react';
+import { Train, ArrowRight, ExternalLink } from 'lucide-react';
 import { trains } from '@/data/mock-data';
+import { indianCities, type IndianCity } from '@/data/mock-data';
+import { CitySearchInput } from '@/components/go-travel/city-search';
+
+function trainStationValue(city: IndianCity): string {
+  if (city.station) return `${city.name} (${city.station})`;
+  return city.name;
+}
 
 export function TrainsPage() {
   const [from, setFrom] = useState('New Delhi (NDLS)');
   const [to, setTo] = useState('Mumbai Central (BCT)');
   const [sortBy, setSortBy] = useState<'price' | 'departure' | 'duration'>('price');
   const [type, setType] = useState<string>('all');
-
-  const fromStations = [...new Set(trains.map(t => t.from))];
-  const toStations = [...new Set(trains.map(t => t.to))];
 
   const filtered = useMemo(() => {
     let result = trains.filter(t => {
@@ -52,25 +54,29 @@ export function TrainsPage() {
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-blue-100 mb-1 block">From Station</label>
-                <Select value={from} onValueChange={setFrom}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {fromStations.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={from}
+                  onChange={(name) => {
+                    const city = indianCities.find(c => c.name === name);
+                    setFrom(city ? trainStationValue(city) : name);
+                  }}
+                  label="From Station"
+                  placeholder="Search departure station..."
+                />
               </div>
               <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-white/20">
                 <ArrowRight className="w-4 h-4 text-white" />
               </div>
               <div className="flex-1 w-full">
-                <label className="text-xs font-semibold text-blue-100 mb-1 block">To Station</label>
-                <Select value={to} onValueChange={setTo}>
-                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {toStations.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CitySearchInput
+                  value={to}
+                  onChange={(name) => {
+                    const city = indianCities.find(c => c.name === name);
+                    setTo(city ? trainStationValue(city) : name);
+                  }}
+                  label="To Station"
+                  placeholder="Search destination station..."
+                />
               </div>
               <div className="w-full sm:w-auto">
                 <label className="text-xs font-semibold text-blue-100 mb-1 block">Journey Date</label>
@@ -115,11 +121,10 @@ export function TrainsPage() {
       {/* Train Cards */}
       <div className="space-y-3">
         {filtered.map((train, i) => (
-          <motion.div
+          <div
             key={train.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.05 }}
+            className="animate-fade-in-up"
+            style={{ animationDuration: '0.3s', animationDelay: `${i * 0.05}s` }}
           >
             <Card className="hover:shadow-lg transition-all border-gray-100 overflow-hidden">
               <CardContent className="p-4 sm:p-5">
@@ -201,7 +206,7 @@ export function TrainsPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
