@@ -13,6 +13,7 @@ import {
   LogIn, LogOut, Ticket, CircleUser
 } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 
 const navItems: { id: Page; label: string; icon: React.ReactNode; mobileOnly?: boolean }[] = [
   { id: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
@@ -52,8 +53,8 @@ export function Header() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <button onClick={() => navigate('home')} className="flex items-center gap-2 group">
-              <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:shadow-emerald-300 transition-shadow">
-                <MapPin className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-emerald-200 group-hover:shadow-emerald-300 transition-shadow">
+                <Image src="/logo.jpeg" alt="Go Travel" width={36} height={36} className="w-full h-full object-cover" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -173,7 +174,9 @@ export function Header() {
                 <SheetContent side="right" className="w-72 p-0">
                   <div className="p-4 border-b bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-5 h-5" />
+                      <div className="w-7 h-7 rounded-lg overflow-hidden">
+                        <Image src="/logo.jpeg" alt="Go Travel" width={28} height={28} className="w-full h-full object-cover" />
+                      </div>
                       <span className="text-lg font-bold">Go Travel</span>
                     </div>
                     <p className="text-xs text-emerald-100 mt-1">India&apos;s Travel Companion</p>

@@ -13,6 +13,7 @@ import {
   MapPin, Mail, Lock, User, Phone, Eye, EyeOff, Shield,
   ArrowRight, Loader2, CheckCircle, AlertCircle, X, Globe, Heart
 } from 'lucide-react';
+import Image from 'next/image';
 import { toast } from '@/hooks/use-toast';
 
 export default function AuthPage() {
@@ -140,8 +141,8 @@ export default function AuthPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <MapPin className="w-7 h-7 text-white" />
+              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white/20">
+                <Image src="/logo.jpeg" alt="Go Travel" width={48} height={48} className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Go Travel</h1>
@@ -202,8 +203,8 @@ export default function AuthPage() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-              <MapPin className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+              <Image src="/logo.jpeg" alt="Go Travel" width={40} height={40} className="w-full h-full object-cover" />
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
               Go Travel

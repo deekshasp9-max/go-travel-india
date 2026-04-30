@@ -1,7 +1,8 @@
 'use client';
 
 import { useGoTravelStore, type Page } from '@/store/go-travel-store';
-import { MapPin, Shield, Phone, Mail, Heart, Globe } from 'lucide-react';
+import { Shield, Phone, Mail, Heart, Globe } from 'lucide-react';
+import Image from 'next/image';
 
 export function Footer() {
   const { setCurrentPage } = useGoTravelStore();
@@ -18,8 +19,8 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden">
+                <Image src="/logo.jpeg" alt="Go Travel" width={32} height={32} className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-bold text-white">Go Travel</span>
             </div>
