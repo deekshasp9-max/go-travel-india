@@ -44,3 +44,23 @@ Stage Summary:
 - Root cause: `validateForm` was defined via `useCallback` inside `TourismPage` but referenced in `BookingDialog` which is a separate function component with no access to the parent's scope
 - Key change: Moved `validateForm` from `useCallback` inside `TourismPage` to a standalone function at module scope
 - Payment method: Both Explore India and Local Rides already use the same `PaymentModal` component with UPI, Cards, Net Banking, Wallets, Pay Later, and Email Link options
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix missing images in Explore India View All and replace framer-motion with CSS animations
+
+Work Log:
+- Identified that `cityImageMap` in tourism-page.tsx only mapped 6 cities (Manali, Jaipur, Goa, Varanasi, Kerala, Rishikesh) but mock data has 12 itineraries
+- Added missing city mappings: Agra, Udaipur, Ladakh, Darjeeling, Amritsar, Munnar (all images exist in /public/destinations/)
+- Replaced all framer-motion usage in tourism-page.tsx with CSS animation classes (animate-fade-in-up, animate-fade-in-down, animate-slide-in-right, stagger-N)
+- Replaced framer-motion AnimatePresence/motion.div in payment-modal.tsx with CSS animations (animate-fade-in, animate-fade-in-scale, animate-scale-in-spring)
+- Added new CSS keyframes to globals.css: fade-in-down, fade-in-scale, slide-in-right, scale-in-spring
+- Added stagger delay utility classes (stagger-1 through stagger-12) for card animations
+- Removed framer-motion import from both files
+- Lint passes clean
+
+Stage Summary:
+- All 12 itinerary cards now show proper images in Explore India
+- Tourism page and payment modal are now React 19 hydration-safe (no framer-motion)
+- Payment flow (UPI, Cards, Net Banking, Wallets, Pay Later, Email Link) was already implemented and works correctly

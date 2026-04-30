@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { motion, AnimatePresence } from 'framer-motion';
+// CSS animations used instead of framer-motion (React 19 hydration safe)
 import {
   CreditCard, Smartphone, Building2, Wallet, Clock, Mail,
   CheckCircle, X, Loader2, Shield, IndianRupee, Copy, QrCode,
@@ -289,47 +289,29 @@ export default function PaymentModal({ amount, isOpen, onClose, onSuccess }: Pay
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-lg max-w-[95vw] p-0 overflow-hidden" onPointerDownOutside={(e) => state === 'processing' && e.preventDefault()}>
         {/* Processing overlay */}
-        <AnimatePresence>
-          {state === 'processing' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center"
-            >
-              <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-4" />
-              <p className="text-lg font-bold text-gray-900">Processing Payment...</p>
-              <p className="text-sm text-gray-500 mt-1">Please do not close this window</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {state === 'processing' && (
+          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-in">
+            <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-4" />
+            <p className="text-lg font-bold text-gray-900">Processing Payment...</p>
+            <p className="text-sm text-gray-500 mt-1">Please do not close this window</p>
+          </div>
+        )}
 
         {/* Success overlay */}
-        <AnimatePresence>
-          {state === 'success' && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', delay: 0.2 }}
-              >
-                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                  <CheckCircle className="w-10 h-10 text-emerald-600" />
-                </div>
-              </motion.div>
-              <h2 className="text-xl font-bold text-gray-900">Payment Successful!</h2>
-              <p className="text-sm text-gray-500 mt-1">{formatINR(amount)} paid</p>
-              {txnId && (
-                <p className="text-xs text-gray-400 mt-2 font-mono">Txn: {txnId}</p>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {state === 'success' && (
+          <div className="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center animate-fade-in-scale">
+            <div className="animate-scale-in-spring">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="w-10 h-10 text-emerald-600" />
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Payment Successful!</h2>
+            <p className="text-sm text-gray-500 mt-1">{formatINR(amount)} paid</p>
+            {txnId && (
+              <p className="text-xs text-gray-400 mt-2 font-mono">Txn: {txnId}</p>
+            )}
+          </div>
+        )}
 
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4 text-white">

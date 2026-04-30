@@ -23,7 +23,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import {
@@ -58,6 +57,12 @@ const cityImageMap: Record<string, string> = {
   Varanasi: '/destinations/varanasi.png',
   Kerala: '/destinations/kerala.png',
   Rishikesh: '/destinations/rishikesh.png',
+  Agra: '/destinations/agra.png',
+  Udaipur: '/destinations/udaipur.png',
+  Ladakh: '/destinations/ladakh.png',
+  Darjeeling: '/destinations/darjeeling.png',
+  Amritsar: '/destinations/amritsar.png',
+  Munnar: '/destinations/munnar.png',
 };
 
 // ---------------------------------------------------------------------------
@@ -275,27 +280,17 @@ export function TourismPage() {
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-20 lg:pb-10">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6"
-        >
+        <div className="mb-6 animate-fade-in-down">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Explore India
           </h1>
           <p className="text-gray-500 mt-1">
             Curated multi-day itineraries for every kind of traveler
           </p>
-        </motion.div>
+        </div>
 
         {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex flex-wrap gap-2 mb-6"
-        >
+        <div className="flex flex-wrap gap-2 mb-6 animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
           {['all', '2', '3', '4', '5'].map((f) => (
             <Button
               key={f}
@@ -311,139 +306,128 @@ export function TourismPage() {
               {f === 'all' ? 'All Trips' : `${f} Days`}
             </Button>
           ))}
-        </motion.div>
+        </div>
 
         {/* Itinerary Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((itin, i) => (
-              <motion.div
-                key={itin.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
-                layout
-              >
-                <Card className="hover:shadow-xl transition-all duration-300 border-0 overflow-hidden group bg-white">
-                  <CardContent className="p-0">
-                    {/* Image */}
-                    <div
-                      className="relative h-48 sm:h-56 overflow-hidden cursor-pointer"
-                      onClick={() => setSelectedItinerary(itin.id)}
-                    >
-                      {getCityImage(itin.city) ? (
-                        <Image
-                          src={getCityImage(itin.city)}
-                          alt={itin.city}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          fallback={
-                            <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
-                              <span className="text-6xl">✨</span>
-                            </div>
-                          }
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
-                          <span className="text-6xl">✨</span>
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3">
-                        <Badge className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {itin.duration}
-                        </Badge>
+          {filtered.map((itin, i) => (
+            <div
+              key={itin.id}
+              className={`animate-fade-in-up stagger-${i + 1}`}
+            >
+              <Card className="hover:shadow-xl transition-all duration-300 border-0 overflow-hidden group bg-white">
+                <CardContent className="p-0">
+                  {/* Image */}
+                  <div
+                    className="relative h-48 sm:h-56 overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedItinerary(itin.id)}
+                  >
+                    {getCityImage(itin.city) ? (
+                      <Image
+                        src={getCityImage(itin.city)}
+                        alt={itin.city}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
+                        <span className="text-6xl">✨</span>
                       </div>
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-emerald-600 text-white shadow-sm">
-                          <Star className="w-3 h-3 mr-1 fill-white" />
-                          {itin.rating}
-                        </Badge>
-                      </div>
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <h3 className="text-white font-bold text-lg">
-                          {itin.city}
-                        </h3>
-                        <p className="text-white/80 text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {itin.state}
-                        </p>
-                      </div>
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <Badge className="bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {itin.duration}
+                      </Badge>
                     </div>
-
-                    {/* Content */}
-                    <div className="p-4 sm:p-5">
-                      <h3 className="font-bold text-gray-900 text-base leading-tight">
-                        {itin.title}
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-emerald-600 text-white shadow-sm">
+                        <Star className="w-3 h-3 mr-1 fill-white" />
+                        {itin.rating}
+                      </Badge>
+                    </div>
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                      <h3 className="text-white font-bold text-lg">
+                        {itin.city}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {itin.days.length} Days
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Sun className="w-3 h-3" /> {itin.bestSeason}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <IndianRupee className="w-3 h-3" /> {itin.budget}
-                        </span>
-                      </div>
+                      <p className="text-white/80 text-sm flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {itin.state}
+                      </p>
+                    </div>
+                  </div>
 
-                      {/* Places Preview */}
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {itin.days[0].places.slice(0, 3).map((p, j) => (
-                          <Badge
-                            key={j}
-                            variant="secondary"
-                            className="text-[10px] font-medium"
-                          >
-                            {categoryIcons[p.type] || '📍'} {p.name}
-                          </Badge>
-                        ))}
-                        {itin.days[0].places.length > 3 && (
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px]"
-                          >
-                            +{itin.days[0].places.length - 3} more
-                          </Badge>
-                        )}
-                      </div>
+                  {/* Content */}
+                  <div className="p-4 sm:p-5">
+                    <h3 className="font-bold text-gray-900 text-base leading-tight">
+                      {itin.title}
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {itin.days.length} Days
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Sun className="w-3 h-3" /> {itin.bestSeason}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <IndianRupee className="w-3 h-3" /> {itin.budget}
+                      </span>
+                    </div>
 
-                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                        <span className="text-xs text-gray-400">
-                          {itin.days.reduce((a, d) => a + d.places.length, 0)}{' '}
-                          places to visit
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setSelectedItinerary(itin.id)}
-                            className="text-xs px-3 rounded-lg"
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Details
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs px-3"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openBooking(itin);
-                            }}
-                          >
-                            <ShoppingCart className="w-3 h-3 mr-1" />
-                            Book Now
-                          </Button>
-                        </div>
+                    {/* Places Preview */}
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {itin.days[0].places.slice(0, 3).map((p, j) => (
+                        <Badge
+                          key={j}
+                          variant="secondary"
+                          className="text-[10px] font-medium"
+                        >
+                          {categoryIcons[p.type] || '📍'} {p.name}
+                        </Badge>
+                      ))}
+                      {itin.days[0].places.length > 3 && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px]"
+                        >
+                          +{itin.days[0].places.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-400">
+                        {itin.days.reduce((a, d) => a + d.places.length, 0)}{' '}
+                        places to visit
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedItinerary(itin.id)}
+                          className="text-xs px-3 rounded-lg"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs px-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openBooking(itin);
+                          }}
+                        >
+                          <ShoppingCart className="w-3 h-3 mr-1" />
+                          Book Now
+                        </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -494,12 +478,7 @@ function ItineraryDetail({
       </Button>
 
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative rounded-2xl overflow-hidden mb-6"
-      >
+      <div className="relative rounded-2xl overflow-hidden mb-6 animate-fade-in-up">
         {getCityImage(itinerary.city) ? (
           <div className="relative h-56 sm:h-72">
             <Image
@@ -542,15 +521,10 @@ function ItineraryDetail({
             </span>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Day Selector */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.15 }}
-        className="flex gap-2 mb-6 overflow-x-auto pb-2"
-      >
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2 animate-fade-in-down" style={{ animationDelay: '0.15s' }}>
         {itinerary.days.map((day) => (
           <Button
             key={day.day}
@@ -565,86 +539,71 @@ function ItineraryDetail({
             Day {day.day}
           </Button>
         ))}
-      </motion.div>
+      </div>
 
       {/* Day Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeDay}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          {currentDay && (
-            <>
-              <div className="mb-5">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Day {currentDay.day}: {currentDay.title}
-                </h2>
-                <p className="text-gray-500 mt-1">{currentDay.description}</p>
-              </div>
+      <div key={activeDay} className="animate-slide-in-right">
+        {currentDay && (
+          <>
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-gray-900">
+                Day {currentDay.day}: {currentDay.title}
+              </h2>
+              <p className="text-gray-500 mt-1">{currentDay.description}</p>
+            </div>
 
-              {/* Timeline */}
-              <div className="space-y-0">
-                {currentDay.places.map((place, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: i * 0.06 }}
-                    className="relative flex gap-4 pb-6"
-                  >
-                    {/* Timeline line */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center text-lg z-10 flex-shrink-0">
-                        {categoryIcons[place.type] || '📍'}
-                      </div>
-                      {i < currentDay.places.length - 1 && (
-                        <div className="w-0.5 flex-1 bg-emerald-200 mt-2" />
-                      )}
+            {/* Timeline */}
+            <div className="space-y-0">
+              {currentDay.places.map((place, i) => (
+                <div
+                  key={i}
+                  className="relative flex gap-4 pb-6 animate-fade-in-up"
+                  style={{ animationDelay: `${i * 0.06}s` }}
+                >
+                  {/* Timeline line */}
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center text-lg z-10 flex-shrink-0">
+                      {categoryIcons[place.type] || '📍'}
                     </div>
-                    {/* Content */}
-                    <Card className="flex-1 border-0 shadow-sm bg-gray-50 hover:bg-white hover:shadow-md transition-all">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-bold text-gray-900">
-                              {place.name}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge
-                                variant="secondary"
-                                className="text-[10px]"
-                              >
-                                {place.type}
-                              </Badge>
-                              <span className="text-xs text-gray-400 flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {place.time}
-                              </span>
-                            </div>
+                    {i < currentDay.places.length - 1 && (
+                      <div className="w-0.5 flex-1 bg-emerald-200 mt-2" />
+                    )}
+                  </div>
+                  {/* Content */}
+                  <Card className="flex-1 border-0 shadow-sm bg-gray-50 hover:bg-white hover:shadow-md transition-all">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-bold text-gray-900">
+                            {place.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px]"
+                            >
+                              {place.type}
+                            </Badge>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {place.time}
+                            </span>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                          {place.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </>
-          )}
-        </motion.div>
-      </AnimatePresence>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                        {place.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Book This Trip Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-        className="mt-8"
-      >
+      <div className="mt-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         <Separator className="mb-6" />
         <Card className="border-emerald-100 bg-emerald-50/50">
           <CardContent className="p-5 sm:p-6">
@@ -672,7 +631,7 @@ function ItineraryDetail({
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -739,7 +698,7 @@ function BookingDialog({
       return;
     }
     onProceed(form, totalPrice, itinerary);
-  }, [form, itinerary, totalPrice, onProceed, validateForm]);
+  }, [form, itinerary, totalPrice, onProceed]);
 
   if (!itinerary) return null;
 

@@ -158,6 +158,83 @@
   animation: fade-in 0.2s ease-out both;
 }
 
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.4s ease-out both;
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.4s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out both;
+}
+
+.animate-scale-in-spring {
+  animation: scale-in-spring 0.5s ease-out both;
+}
+
+/* Staggered card animations */
+.stagger-1 { animation-delay: 0s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.16s; }
+.stagger-4 { animation-delay: 0.24s; }
+.stagger-5 { animation-delay: 0.32s; }
+.stagger-6 { animation-delay: 0.4s; }
+.stagger-7 { animation-delay: 0.48s; }
+.stagger-8 { animation-delay: 0.56s; }
+.stagger-9 { animation-delay: 0.64s; }
+.stagger-10 { animation-delay: 0.72s; }
+.stagger-11 { animation-delay: 0.8s; }
+.stagger-12 { animation-delay: 0.88s; }
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
