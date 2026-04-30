@@ -167,7 +167,7 @@ export function CitySearchInput({
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-xl z-[9999] max-h-64 overflow-y-auto animate-fade-in-down"
+          className="absolute left-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-xl z-[9999] max-h-72 overflow-y-auto animate-fade-in-down min-w-[300px] sm:min-w-[340px]"
           style={{ animationDuration: '0.15s' }}
         >
           {filteredCities.length === 0 ? (
@@ -195,8 +195,8 @@ export function CitySearchInput({
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-900 truncate">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-gray-900">
                         {city.name}
                       </span>
                       {badges.length > 0 && (
@@ -204,7 +204,7 @@ export function CitySearchInput({
                           {badges.map((badge) => (
                             <span
                               key={badge}
-                              className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded"
+                              className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded whitespace-nowrap"
                             >
                               {badge}
                             </span>
@@ -212,7 +212,7 @@ export function CitySearchInput({
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400 truncate block">
+                    <span className="text-xs text-gray-400">
                       {city.state}
                     </span>
                   </div>
