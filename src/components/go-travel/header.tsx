@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import {
-  MapPin, Plane, Train, Bus, Bike, Car, Building2, History,
-  Menu, X, Shield, ChevronDown, Home, Compass, CreditCard,
-  Star, LogIn, LogOut, User, Ticket, CircleUser
+  MapPin, Plane, Train, Bus, Bike, Car, History,
+  Menu, Shield, ChevronDown, Home, Compass, CreditCard,
+  LogIn, LogOut, Ticket, CircleUser
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -93,13 +93,9 @@ export function Header() {
                   More
                   <ChevronDown className={`w-3 h-3 transition-transform ${travelDropdown ? 'rotate-180' : ''}`} />
                 </button>
-                <AnimatePresence>
-                  {travelDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50"
+                {travelDropdown && (
+                    <div
+                      className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50 animate-fade-in"
                     >
                       {[
                         { id: 'trains' as Page, label: 'Trains', icon: <Train className="w-4 h-4" /> },
@@ -117,9 +113,8 @@ export function Header() {
                           {item.icon}{item.label}
                         </button>
                       ))}
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </div>
             </nav>
 

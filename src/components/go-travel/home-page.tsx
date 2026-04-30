@@ -3,7 +3,6 @@
 import { useGoTravelStore } from '@/store/go-travel-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { motion } from 'framer-motion';
 import {
   MapPin, Plane, Train, Bus, Bike, Car, Shield, Star,
   ArrowRight, ChevronRight, Sparkles, TrendingUp
@@ -48,12 +47,7 @@ export function HomePage() {
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-yellow-300 rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl animate-fade-in-up">
             <div className="flex items-center gap-2 mb-4">
               <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-medium">
                 <Sparkles className="w-3.5 h-3.5" /> India&apos;s #1 Travel Platform
@@ -106,7 +100,7 @@ export function HomePage() {
                 <span><strong>100%</strong> Safe Rides</span>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -114,11 +108,10 @@ export function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-8 relative z-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {features.map((feature, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${i * 100}ms` }}
             >
               <Card
                 className={`cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br ${feature.color} group`}
@@ -136,7 +129,7 @@ export function HomePage() {
                   <ChevronRight className="w-4 h-4 text-gray-400 mt-2 group-hover:translate-x-1 transition-transform" />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -154,11 +147,10 @@ export function HomePage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           {destinations.map((dest, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: i * 0.04 }}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${i * 40}ms` }}
             >
               <Card
                 className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 overflow-hidden group"
@@ -194,7 +186,7 @@ export function HomePage() {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
