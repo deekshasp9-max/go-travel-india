@@ -137,15 +137,23 @@ function sampleRoute(coords: [number, number][], maxPoints: number = 60): [numbe
   return sampled;
 }
 
-function formatINR(n: number): string {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+function safeFixed(val: unknown, digits: number = 1): string {
+  const n = Number(val);
+  return isNaN(n) ? '0.0' : n.toFixed(digits);
+}
+
+function formatINR(n: unknown): string {
+  const num = Number(n);
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(isNaN(num) ? 0 : num);
 }
 
 function calcFare(distanceKm: number, durationMin: number, vehicle: typeof VEHICLES[0]): { total: number; breakdown: { baseFare: number; distanceFare: number; timeFare: number; platformFee: number } } {
-  const base = vehicle.baseFare;
-  const distFare = Math.round(distanceKm * vehicle.perKm);
-  const timeFare = Math.round(durationMin * (vehicle.perMin || 0));
-  const platform = vehicle.platformFee || 0;
+  const base = Number(vehicle.baseFare) || 0;
+  const perKm = Number(vehicle.perKm) || 0;
+  const perMin = Number(vehicle.perMin) || 0;
+  const distFare = Math.round((distanceKm || 0) * perKm);
+  const timeFare = Math.round((durationMin || 0) * perMin);
+  const platform = Number(vehicle.platformFee) || 0;
   const total = base + distFare + timeFare + platform;
   return { total, breakdown: { baseFare: base, distanceFare: distFare, timeFare, platformFee: platform } };
 }
@@ -172,10 +180,10 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     const res = await fetch(`/api/reverse-geocode?lat=${lat}&lng=${lng}`);
     if (res.ok) {
       const data = await res.json();
-      return data.shortName || data.displayName || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      return data.shortName || data.displayName || `${safeFixed(lat, 4)}, ${safeFixed(lng, 4)}`;
     }
   } catch { /* silent */ }
-  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  return `${safeFixed(lat, 4)}, ${safeFixed(lng, 4)}`;
 }
 
 function formatDate(dateStr: string): string {
@@ -564,13 +572,15 @@ export function RidesPage() {
       const routeData = await fetchRoute(pickupCoords, destCoords);
       const leafletCoords = toLeaflet(routeData.geometry);
       setRouteCoords(leafletCoords);
-      setDistance(routeData.distance);
-      setRouteDuration(routeData.duration);
-      const { total, breakdown } = calcFare(routeData.distance, routeData.duration, vehicle);
+      const safeDist = routeData.distance || 0;
+      const safeDur = routeData.duration || 0;
+      setDistance(safeDist);
+      setRouteDuration(safeDur);
+      const { total, breakdown } = calcFare(safeDist, safeDur, vehicle);
       setFare(total);
       setFareBreakdown(breakdown);
     } catch {
-      const d = haversine(pickupCoords, destCoords);
+      const d = haversine(pickupCoords, destCoords) || 0;
       const dur = Math.round((d / 25) * 60);
       setDistance(d);
       setRouteDuration(dur);
@@ -625,7 +635,7 @@ export function RidesPage() {
           rideType: vehicleType, pickup: pickupName, destination: destName,
           pickupLat: pickupCoords[0], pickupLng: pickupCoords[1],
           destLat: destCoords[0], destLng: destCoords[1],
-          distance, fare, status: 'ongoing',
+          distance: distance || 0, fare: fare || 0, status: 'ongoing',
         }),
       });
       const data = await res.json();
@@ -802,7 +812,7 @@ export function RidesPage() {
                             <span className="text-sm text-gray-700 truncate">{ride.destination}</span>
                           </div>
                           <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                            {ride.distance != null ? <span>{ride.distance.toFixed(1)} km</span> : null}
+                            <span>{safeFixed(ride.distance)} km</span>
                             {ride.paymentMethod && <span>via {ride.paymentMethod}</span>}
                             <span>{formatDate(ride.createdAt)}</span>
                           </div>
@@ -911,7 +921,7 @@ export function RidesPage() {
                       {/* Fare Breakdown */}
                       {distance > 0 && fareBreakdown && (
                         <div className="bg-purple-50 rounded-xl p-3 border border-purple-100 animate-fade-in">
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-600">Distance</span><span className="font-semibold">{distance.toFixed(1)} km</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-600">Distance</span><span className="font-semibold">{safeFixed(distance)} km</span></div>
                           <div className="flex items-center justify-between text-sm mt-1"><span className="text-gray-600">Base Fare</span><span className="font-semibold">₹{fareBreakdown.baseFare}</span></div>
                           <div className="flex items-center justify-between text-sm mt-1"><span className="text-gray-600">Distance ({vehicle.perKm}₹/km)</span><span className="font-semibold">₹{fareBreakdown.distanceFare}</span></div>
                           <div className="flex items-center justify-between text-sm mt-1"><span className="text-gray-600">Time ({vehicle.perMin}₹/min)</span><span className="font-semibold">₹{fareBreakdown.timeFare}</span></div>
@@ -959,7 +969,7 @@ export function RidesPage() {
                           <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-amber-700 font-medium">🚗 Driver is on the way</span>
-                              <span className="font-bold text-amber-700">{remainingDist > 0.1 ? `${(remainingDist * 1000).toFixed(0)}m away` : 'Arriving...'}</span>
+                              <span className="font-bold text-amber-700">{remainingDist > 0.1 ? `${safeFixed(remainingDist * 1000, 0)}m away` : 'Arriving...'}</span>
                             </div>
                             <div className="mt-2 w-full bg-amber-200 rounded-full h-1.5">
                               <div className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000" style={{ width: remainingDist > 0.1 ? '70%' : '100%' }} />
@@ -968,7 +978,7 @@ export function RidesPage() {
 
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Fare</p><p className="font-bold text-sm">₹{fare}</p></div>
-                            <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Distance</p><p className="font-bold text-sm">{distance.toFixed(1)} km</p></div>
+                            <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Distance</p><p className="font-bold text-sm">{safeFixed(distance)} km</p></div>
                             <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">ETA</p><p className="font-bold text-sm">~{routeDuration} min</p></div>
                           </div>
 
@@ -1019,7 +1029,7 @@ export function RidesPage() {
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <Badge className="bg-blue-100 text-blue-700 text-xs font-semibold"><div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse mr-1.5" />RIDE IN PROGRESS</Badge>
-                      <span className="text-sm font-bold text-blue-700">{remainingDist > 0.1 ? `${remainingDist.toFixed(1)} km left` : 'Arriving...'}</span>
+                      <span className="text-sm font-bold text-blue-700">{remainingDist > 0.1 ? `${safeFixed(remainingDist)} km left` : 'Arriving...'}</span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-start gap-2"><div className="w-3 h-3 bg-green-500 rounded-full mt-1.5 flex-shrink-0" /><div><p className="text-xs text-gray-400">Pickup</p><p className="text-sm font-medium">{pickupName}</p></div></div>
@@ -1028,7 +1038,7 @@ export function RidesPage() {
                     <Separator />
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">{vehicle.icon} {vehicle.name}</p></div>
-                      <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Distance</p><p className="font-bold text-sm">{distance.toFixed(1)} km</p></div>
+                      <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Distance</p><p className="font-bold text-sm">{safeFixed(distance)} km</p></div>
                       <div className="bg-gray-50 rounded-lg p-2"><p className="text-xs text-gray-400">Fare</p><p className="font-bold text-sm text-purple-600">₹{fare}</p></div>
                     </div>
                     <Button onClick={completeRide} variant="outline" className="w-full py-3 rounded-xl border-2 border-green-200 text-green-700 hover:bg-green-50 font-bold">
@@ -1059,7 +1069,7 @@ export function RidesPage() {
                   <div className="p-4 space-y-3">
                     <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Pickup</span><span className="text-sm font-medium">{pickupName}</span></div>
                     <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Destination</span><span className="text-sm font-medium">{destName}</span></div>
-                    <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Distance</span><span className="text-sm font-medium">{distance.toFixed(1)} km</span></div>
+                    <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Distance</span><span className="text-sm font-medium">{safeFixed(distance)} km</span></div>
                     <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Vehicle</span><span className="text-sm font-medium">{vehicle.icon} {vehicle.name}</span></div>
                     {fareBreakdown && (
                       <div className="bg-gray-50 rounded-lg p-3 space-y-1">
@@ -1117,14 +1127,14 @@ export function RidesPage() {
               {phase === 'approaching' && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
                   <Badge className="bg-purple-600 text-white shadow-lg px-3 py-1.5 text-xs animate-pulse">
-                    🚗 Driver approaching... {(remainingDist * 1000).toFixed(0)}m away
+                    🚗 Driver approaching... {safeFixed(remainingDist * 1000, 0)}m away
                   </Badge>
                 </div>
               )}
               {phase === 'riding' && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
                   <Badge className="bg-blue-600 text-white shadow-lg px-3 py-1.5 text-xs">
-                    🛣️ Following road route · {remainingDist > 0.1 ? `${remainingDist.toFixed(1)} km left` : 'Arriving...'}
+                    🛣️ Following road route · {remainingDist > 0.1 ? `${safeFixed(remainingDist)} km left` : 'Arriving...'}
                   </Badge>
                 </div>
               )}
