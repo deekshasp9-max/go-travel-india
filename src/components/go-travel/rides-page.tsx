@@ -802,14 +802,14 @@ export function RidesPage() {
                             <span className="text-sm text-gray-700 truncate">{ride.destination}</span>
                           </div>
                           <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                            <span>{ride.distance.toFixed(1)} km</span>
+                            {ride.distance != null ? <span>{ride.distance.toFixed(1)} km</span> : null}
                             {ride.paymentMethod && <span>via {ride.paymentMethod}</span>}
                             <span>{formatDate(ride.createdAt)}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-xl font-extrabold text-purple-600">{formatINR(ride.fare)}</p>
+                        <p className="text-xl font-extrabold text-purple-600">{formatINR(ride.fare ?? 0)}</p>
                       </div>
                     </div>
                   </CardContent>
