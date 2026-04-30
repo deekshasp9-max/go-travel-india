@@ -62,16 +62,22 @@ export default function GoTravelApp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50/50">
-      <Header />
-      <main className="flex-1 pt-4">
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col bg-gray-50/50">
         <ErrorBoundary>
-          {renderPage()}
+          <Header />
         </ErrorBoundary>
-      </main>
-      <Footer />
-      {/* Spacer for mobile bottom nav */}
-      <div className="h-16 lg:hidden" />
-    </div>
+        <main className="flex-1 pt-4">
+          <ErrorBoundary key={currentPage}>
+            {renderPage()}
+          </ErrorBoundary>
+        </main>
+        <ErrorBoundary>
+          <Footer />
+        </ErrorBoundary>
+        {/* Spacer for mobile bottom nav */}
+        <div className="h-16 lg:hidden" />
+      </div>
+    </ErrorBoundary>
   );
 }

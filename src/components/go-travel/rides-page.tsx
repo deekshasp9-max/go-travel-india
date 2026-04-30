@@ -559,7 +559,7 @@ export function RidesPage() {
         }
       });
     }
-  }, [pickupCoords, destCoords, pickupName, destName, vehicleType, distance, fare, routeCoords, destName, animateRoute]);
+  }, [pickupCoords, destCoords, pickupName, destName, vehicleType, distance, fare, routeCoords, animateRoute]);
 
   // 4) Complete ride manually
   const completeRide = useCallback(() => {
@@ -912,7 +912,7 @@ export function RidesPage() {
 
         {/* ─── MAP ─── */}
         <div className="lg:col-span-3 order-1 lg:order-2">
-          <Card className="border-0 shadow-lg overflow-hidden h-[55vh] sm:h-[60vh] lg:h-[calc(100vh-160px)] lg:min-h-[500px]">
+          <Card className="border-0 shadow-lg overflow-hidden relative h-[55vh] sm:h-[60vh] lg:h-[calc(100vh-160px)] lg:min-h-[500px]">
             <RideMap
               center={mapCenter}
               pickupCoords={pickupCoords}
