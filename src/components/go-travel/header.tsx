@@ -50,11 +50,11 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-[70px]">
             {/* Logo */}
             <button onClick={() => navigate('home')} className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-emerald-200 group-hover:shadow-emerald-300 transition-shadow">
-                <Image src="/logo.jpeg" alt="Go Travel" width={36} height={36} className="w-full h-full object-cover" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-emerald-200 group-hover:shadow-emerald-300 transition-shadow">
+                <Image src="/logo.jpeg" alt="Go Travel" width={48} height={48} className="w-full h-full object-cover" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
@@ -174,8 +174,8 @@ export function Header() {
                 <SheetContent side="right" className="w-72 p-0">
                   <div className="p-4 border-b bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg overflow-hidden">
-                        <Image src="/logo.jpeg" alt="Go Travel" width={28} height={28} className="w-full h-full object-cover" />
+                      <div className="w-10 h-10 rounded-lg overflow-hidden">
+                        <Image src="/logo.jpeg" alt="Go Travel" width={40} height={40} className="w-full h-full object-cover" />
                       </div>
                       <span className="text-lg font-bold">Go Travel</span>
                     </div>

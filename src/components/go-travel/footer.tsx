@@ -19,8 +19,8 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg overflow-hidden">
-                <Image src="/logo.jpeg" alt="Go Travel" width={32} height={32} className="w-full h-full object-cover" />
+              <div className="w-11 h-11 rounded-lg overflow-hidden">
+                <Image src="/logo.jpeg" alt="Go Travel" width={44} height={44} className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-bold text-white">Go Travel</span>
             </div>
