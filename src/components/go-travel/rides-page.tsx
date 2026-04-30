@@ -276,7 +276,7 @@ export function RidesPage() {
       await fetch('/api/rides', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: rideState.currentRideId, paymentMethod: method, paymentStatus: 'paid' }),
+        body: JSON.stringify({ id: rideState.currentRideId, paymentMethod: method, status: 'completed' }),
       });
     } catch { /* silent */ }
   }, [rideState.currentRideId]);

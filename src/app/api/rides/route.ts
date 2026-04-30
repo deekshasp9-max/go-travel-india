@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, paymentMethod, paymentStatus } = body;
+    const { id, paymentMethod, status } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Ride ID required' }, { status: 400 });
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
 
     const updateData: Record<string, string> = {};
     if (paymentMethod) updateData.paymentMethod = paymentMethod;
-    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+    if (status) updateData.status = status;
 
     const ride = await db.ride.update({
       where: { id },
