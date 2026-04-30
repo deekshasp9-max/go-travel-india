@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+
+const today = new Date().toISOString().split('T')[0];
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +19,7 @@ function trainStationValue(city: IndianCity): string {
 export function TrainsPage() {
   const [from, setFrom] = useState('New Delhi (NDLS)');
   const [to, setTo] = useState('Mumbai Central (BCT)');
+  const [travelDate, setTravelDate] = useState(today);
   const [sortBy, setSortBy] = useState<'price' | 'departure' | 'duration'>('price');
   const [type, setType] = useState<string>('all');
 
@@ -80,7 +83,7 @@ export function TrainsPage() {
               </div>
               <div className="w-full sm:w-auto">
                 <label className="text-xs font-semibold text-blue-100 mb-1 block">Journey Date</label>
-                <input type="date" className="w-full bg-white rounded-lg px-3 py-2 text-sm outline-none" defaultValue={new Date().toISOString().split('T')[0]} readOnly />
+                <input type="date" className="w-full bg-white rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400" min={today} value={travelDate} onChange={(e) => setTravelDate(e.target.value)} />
               </div>
             </div>
           </div>
