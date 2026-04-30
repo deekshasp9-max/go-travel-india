@@ -10,12 +10,18 @@ import {
 } from 'lucide-react';
 
 const destinations = [
-  { name: 'Manali', state: 'Himachal Pradesh', image: '🏔️', tag: 'Adventure' },
-  { name: 'Goa', state: 'Goa', image: '🏖️', tag: 'Beaches' },
-  { name: 'Jaipur', state: 'Rajasthan', image: '🏰', tag: 'Heritage' },
-  { name: 'Kerala', state: 'Kerala', image: '🌴', tag: 'Backwaters' },
-  { name: 'Varanasi', state: 'Uttar Pradesh', image: '🛕', tag: 'Spiritual' },
-  { name: 'Rishikesh', state: 'Uttarakhand', image: ' raft', tag: 'Adventure' },
+  { name: 'Manali', state: 'Himachal Pradesh', image: '/destinations/manali.png', emoji: '🏔️', tag: 'Adventure' },
+  { name: 'Goa', state: 'Goa', image: '/destinations/goa.png', emoji: '🏖️', tag: 'Beaches' },
+  { name: 'Jaipur', state: 'Rajasthan', image: '/destinations/jaipur.png', emoji: '🏰', tag: 'Heritage' },
+  { name: 'Kerala', state: 'Kerala', image: '/destinations/kerala.png', emoji: '🌴', tag: 'Backwaters' },
+  { name: 'Varanasi', state: 'Uttar Pradesh', image: '/destinations/varanasi.png', emoji: '🛕', tag: 'Spiritual' },
+  { name: 'Rishikesh', state: 'Uttarakhand', image: '/destinations/rishikesh.png', emoji: '🚣', tag: 'Adventure' },
+  { name: 'Agra', state: 'Uttar Pradesh', image: '/destinations/agra.png', emoji: '🕌', tag: 'Heritage' },
+  { name: 'Udaipur', state: 'Rajasthan', image: '/destinations/udaipur.png', emoji: '🏰', tag: 'Lakes' },
+  { name: 'Ladakh', state: 'Ladakh', image: '/destinations/ladakh.png', emoji: '🏔️', tag: 'Adventure' },
+  { name: 'Darjeeling', state: 'West Bengal', image: '/destinations/darjeeling.png', emoji: '🍵', tag: 'Hills' },
+  { name: 'Amritsar', state: 'Punjab', image: '/destinations/amritsar.png', emoji: '🛕', tag: 'Spiritual' },
+  { name: 'Munnar', state: 'Kerala', image: '/destinations/munnar.png', emoji: '🍵', tag: 'Tea Gardens' },
 ];
 
 const features = [
@@ -146,21 +152,38 @@ export function HomePage() {
             View All <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           {destinations.map((dest, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
+              transition={{ duration: 0.3, delay: i * 0.04 }}
             >
               <Card
                 className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 overflow-hidden group"
                 onClick={() => navigate('tourism')}
               >
                 <CardContent className="p-0">
-                  <div className="relative bg-gradient-to-br from-gray-100 to-gray-50 h-28 sm:h-32 flex items-center justify-center text-4xl sm:text-5xl group-hover:scale-105 transition-transform duration-500">
-                    {dest.image === ' raft' ? '🚣' : dest.image}
+                  <div className="relative h-28 sm:h-32 overflow-hidden">
+                    <img
+                      src={dest.image}
+                      alt={dest.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.nextElementSibling) (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/40 to-transparent p-2">
+                      <span className="text-white text-xs font-semibold">{dest.name}</span>
+                    </div>
+                    {/* Fallback for broken images */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-50 items-center justify-center text-4xl sm:text-5xl" style={{ display: 'none' }}>
+                      {dest.emoji}
+                    </div>
                   </div>
                   <div className="p-3">
                     <h3 className="font-bold text-sm text-gray-900">{dest.name}</h3>

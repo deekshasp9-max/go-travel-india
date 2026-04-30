@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGoTravelStore } from '@/store/go-travel-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +12,10 @@ import { motion } from 'framer-motion';
 import {
   MapPin, Bike, Car, Clock, Shield, Phone,
   Crosshair, Play, Pause, ChevronRight,
-  Star, Bell, CheckCircle, Loader2, Map
+  Star, Bell, CheckCircle, Loader2, Map, CreditCard
 } from 'lucide-react';
 import { rideRates } from '@/data/mock-data';
+import PaymentModal from '@/components/go-travel/payment-modal';
 
 // Demo route: Delhi Connaught Place to India Gate
 const DEMO_PICKUP: [number, number] = [28.6315, 77.2167];
@@ -163,11 +165,14 @@ function LiveMap({ pickupCoords, destCoords, driverPosition }: {
 
 export function RidesPage() {
   const { rideState, setRideState, driverPosition, setDriverPosition } = useGoTravelStore();
+  const { user } = useAuthStore();
   const [sosTriggered, setSosTriggered] = useState(false);
   const [sosMessage, setSosMessage] = useState('');
   const [simulating, setSimulating] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [rideStep, setRideStep] = useState(0);
+  const [showPayment, setShowPayment] = useState(false);
+  const [ridePaid, setRidePaid] = useState(false);
   const simIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const vehicleTypes = [
@@ -261,7 +266,20 @@ export function RidesPage() {
     setDriverPosition(null);
     setSimulating(false);
     setRideStep(0);
+    setRidePaid(false);
   };
+
+  const handleRidePayment = useCallback(async (method: string) => {
+    setShowPayment(false);
+    setRidePaid(true);
+    try {
+      await fetch('/api/rides', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: rideState.currentRideId, paymentMethod: method, paymentStatus: 'paid' }),
+      });
+    } catch { /* silent */ }
+  }, [rideState.currentRideId]);
 
   const triggerSOS = async () => {
     const position = driverPosition || rideState.pickupCoords || DEMO_PICKUP;
@@ -431,10 +449,10 @@ export function RidesPage() {
           {rideState.status === 'completed' && (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
               <Card className="border-0 shadow-lg overflow-hidden"><CardContent className="p-0">
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 text-center text-white">
+                <div className={`p-6 text-center text-white ${ridePaid ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}>
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }} className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3"><CheckCircle className="w-8 h-8" /></motion.div>
                   <h2 className="text-2xl font-extrabold">Ride Completed!</h2>
-                  <p className="text-emerald-100 text-sm mt-1">Thanks for riding with Go Travel</p>
+                  <p className="text-sm mt-1 opacity-90">{ridePaid ? 'Payment received. Thanks for riding with Go Travel!' : 'Please complete your payment below'}</p>
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Pickup</span><span className="text-sm font-medium">{rideState.pickup}</span></div>
@@ -443,6 +461,15 @@ export function RidesPage() {
                   <div className="flex items-center justify-between py-2"><span className="text-sm text-gray-500">Vehicle</span><span className="text-sm font-medium">{selectedRate.icon} {selectedRate.name}</span></div>
                   <Separator />
                   <div className="flex items-center justify-between py-2"><span className="text-lg font-bold text-gray-900">Total Fare</span><span className="text-2xl font-extrabold text-emerald-600">₹{rideState.fare}</span></div>
+                  {ridePaid ? (
+                    <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-center">
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs"><CheckCircle className="w-3 h-3 mr-1" />Paid Successfully</Badge>
+                    </div>
+                  ) : (
+                    <Button onClick={() => setShowPayment(true)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-xl font-bold text-base shadow-lg shadow-emerald-200">
+                      <CreditCard className="w-5 h-5 mr-2" /> Pay ₹{rideState.fare}
+                    </Button>
+                  )}
                   <Button onClick={resetRide} className="w-full bg-purple-600 hover:bg-purple-700 text-white py-5 rounded-xl font-bold">Book Another Ride <ChevronRight className="w-4 h-4 ml-1" /></Button>
                 </div>
               </CardContent></Card>
@@ -468,6 +495,14 @@ export function RidesPage() {
           <Bell className="w-6 h-6" />
         </button>
       )}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        amount={rideState.fare}
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={handleRidePayment}
+      />
 
       {/* SOS Dialog */}
       {sosTriggered && (
