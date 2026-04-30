@@ -1,4 +1,40 @@
 ---
+Task ID: 6
+Agent: Main Agent
+Task: Rewrite Local Rides with GPS auto-detect, Bengaluru default, random driver, OSRM road routing
+
+Work Log:
+- Completely rewrote rides-page.tsx (~800 lines) from scratch with new architecture:
+  - GPS auto-detection on page load with Bengaluru fallback
+  - Default map center at Bengaluru (MG Road area)
+  - Location search with Nominatim geocode API (debounced, Bengaluru-biased)
+  - 14 quick-select Bengaluru popular spots (MG Road, Koramangala, Indiranagar, etc.)
+  - Vehicle selection: Bike, Auto, Car, Car Premium with dynamic fare calculation
+  - OSRM road routing via /api/route endpoint (pickup → destination)
+  - Random driver origin: vehicle spawns 500m-1.5km away at random angle
+  - Two-phase ride animation:
+    Phase 1 (Approaching): Driver follows road route from random position to pickup
+    Phase 2 (Riding): After "Start Ride", driver follows road route from pickup to destination
+  - Real-time remaining distance counter during animation
+  - Driver arrival notification with "Start Ride" button
+  - SOS emergency feature with floating button
+  - Payment modal integration for post-ride payment
+  - Inline Leaflet map with markers (green pickup pin, red destination pin, purple car driver, blue GPS dot)
+  - Route polylines: solid blue (main route), dashed purple (approach route)
+  - Map auto-fits bounds to show all relevant points
+- Fixed ESLint: renamed useQuickSpot to quickSelect (avoided false hook detection)
+- Zero lint errors, zero warnings
+- Dev server verified running: GET / 200
+
+Stage Summary:
+- Complete rides page rewrite with GPS + Bengaluru default
+- Real OSRM road-following routing (not straight-line simulation)
+- Two-phase animation: approaching → arrived → riding → completed
+- Random driver spawn from nearby location
+- Real-time distance tracking during animation
+- All existing features preserved: SOS, payment, fare calculation, vehicle selection
+
+---
 Task ID: 5
 Agent: Main Agent
 Task: Implement all missing components - payment-modal, auth-page, bookings-page
