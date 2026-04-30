@@ -1,530 +1,426 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent } from '@/components/ui/card';
+import { useGoTravelStore } from '@/store/go-travel-store';
+import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plane,
-  Train,
-  Bike,
-  MapPin,
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Loader2,
-  Shield,
-  CheckCircle,
+  MapPin, Mail, Lock, User, Phone, Eye, EyeOff, Shield,
+  ArrowRight, Loader2, CheckCircle, AlertCircle, X, Globe, Heart
 } from 'lucide-react';
-import { useAuthStore } from '@/store/auth-store';
-import { useGoTravelStore } from '@/store/go-travel-store';
-
-type AuthMode = 'login' | 'register';
-
-const features = [
-  { icon: Plane, label: 'Flights' },
-  { icon: Train, label: 'Trains' },
-  { icon: Bike, label: 'Bikes' },
-  { icon: MapPin, label: 'Experiences' },
-];
+import { toast } from '@/hooks/use-toast';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<AuthMode>('login');
+  const { setCurrentPage } = useGoTravelStore();
+  const { setAuth } = useAuthStore();
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
-  // Form fields
+  // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { setAuth } = useAuthStore();
-  const { setCurrentPage } = useGoTravelStore();
-
-  const resetForm = useCallback(() => {
-    setName('');
-    setEmail('');
-    setPhone('');
-    setPassword('');
-    setConfirmPassword('');
-    setError('');
-    setSuccess('');
-  }, []);
-
-  const toggleMode = useCallback(() => {
-    const next = mode === 'login' ? 'register' : 'login';
-    setMode(next);
-    resetForm();
-  }, [mode, resetForm]);
-
-  const validateRegister = useCallback((): boolean => {
-    if (!name.trim()) {
-      setError('Full name is required.');
-      return false;
+  // Validation
+  const validate = useCallback((): boolean => {
+    const errs: Record<string, string> = {};
+    if (mode === 'signup' && !name.trim()) errs.name = 'Please enter your name';
+    if (!email.trim()) errs.email = 'Please enter your email';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Invalid email format';
+    if (mode === 'signup' && phone.trim()) {
+      if (!/^[6-9]\d{9}$/.test(phone.replace(/\s/g, '')))
+        errs.phone = 'Enter a valid 10-digit Indian phone number';
     }
-    if (!email.trim()) {
-      setError('Email address is required.');
-      return false;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
-      return false;
-    }
-    if (phone && !/^[0-9+\-\s()]{7,15}$/.test(phone)) {
-      setError('Please enter a valid phone number.');
-      return false;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-      return false;
-    }
-    setError('');
-    return true;
-  }, [name, email, phone, password, confirmPassword]);
+    if (!password) errs.password = 'Please enter your password';
+    else if (password.length < 6) errs.password = 'Password must be at least 6 characters';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }, [mode, name, email, phone, password]);
 
-  const validateLogin = useCallback((): boolean => {
-    if (!email.trim()) {
-      setError('Email address is required.');
-      return false;
-    }
-    if (!password.trim()) {
-      setError('Password is required.');
-      return false;
-    }
-    setError('');
-    return true;
-  }, [email, password]);
-
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      setLoading(true);
-      setError('');
-      setSuccess('');
-
-      try {
-        if (mode === 'register') {
-          if (!validateRegister()) {
-            setLoading(false);
-            return;
-          }
-          const res = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: name.trim(),
-              email: email.trim(),
-              ...(phone.trim() ? { phone: phone.trim() } : {}),
-              password,
-            }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            setError(data.error || 'Registration failed. Please try again.');
-            setLoading(false);
-            return;
-          }
-
-          setAuth(data.user, data.token);
-          setSuccess('Account created successfully! Redirecting…');
-          setTimeout(() => {
-            setCurrentPage('home');
-          }, 1200);
-        } else {
-          if (!validateLogin()) {
-            setLoading(false);
-            return;
-          }
-          const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: email.trim(),
-              password,
-            }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            setError(data.error || 'Login failed. Please check your credentials.');
-            setLoading(false);
-            return;
-          }
-
-          setAuth(data.user, data.token);
-          setSuccess('Welcome back! Redirecting…');
-          setTimeout(() => {
-            setCurrentPage('home');
-          }, 1200);
-        }
-      } catch {
-        setError('Something went wrong. Please try again later.');
-      } finally {
-        setLoading(false);
+  // Login handler
+  const handleLogin = useCallback(async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user && data.token) {
+        setAuth(data.user, data.token);
+        toast({
+          title: 'Welcome back! 👋',
+          description: `Signed in as ${data.user.name}`,
+        });
+        setCurrentPage('home');
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: data.error || 'Invalid email or password',
+          variant: 'destructive',
+        });
       }
-    },
-    [mode, validateRegister, validateLogin, name, email, phone, password, setAuth, setCurrentPage],
-  );
+    } catch {
+      toast({
+        title: 'Login Failed',
+        description: 'Network error. Please check your connection.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [email, password, validate, setAuth, setCurrentPage]);
+
+  // Signup handler
+  const handleSignup = useCallback(async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.user && data.token) {
+        setAuth(data.user, data.token);
+        toast({
+          title: 'Account Created! 🎉',
+          description: `Welcome to Go Travel, ${data.user.name}!`,
+        });
+        setCurrentPage('home');
+      } else {
+        toast({
+          title: 'Sign Up Failed',
+          description: data.error || 'Could not create account',
+          variant: 'destructive',
+        });
+      }
+    } catch {
+      toast({
+        title: 'Sign Up Failed',
+        description: 'Network error. Please check your connection.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [name, email, phone, password, validate, setAuth, setCurrentPage]);
+
+  const switchMode = () => {
+    setMode((m) => (m === 'login' ? 'signup' : 'login'));
+    setErrors({});
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="w-full max-w-5xl"
-      >
-        <Card className="overflow-hidden border-0 shadow-2xl rounded-2xl">
-          <div className="flex flex-col lg:flex-row min-h-[600px]">
-            {/* ───── Left branding panel ───── */}
-            <motion.div
-              initial={{ opacity: 0, x: -32 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 p-10 text-white flex-col justify-between"
-            >
-              {/* Decorative circles */}
-              <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-white/5" />
-              <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full bg-white/5" />
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Left Panel - Branding (hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-yellow-300 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white rounded-full blur-3xl" />
+        </div>
 
-              <div className="relative z-10">
-                <motion.div
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="flex items-center gap-3 mb-2"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Plane className="w-5 h-5" />
-                  </div>
-                  <span className="text-2xl font-bold tracking-tight">Go Travel</span>
-                </motion.div>
-                <p className="text-emerald-100 text-sm mt-1">India&apos;s Trusted Travel Companion</p>
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-white">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <MapPin className="w-7 h-7 text-white" />
               </div>
-
-              <div className="relative z-10 flex-1 flex flex-col justify-center py-12">
-                <motion.h2
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-3xl font-bold leading-snug mb-6"
-                >
-                  Explore India
-                  <br />
-                  Like Never Before
-                </motion.h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {features.map((feat, i) => (
-                    <motion.div
-                      key={feat.label}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + i * 0.1 }}
-                      className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3"
-                    >
-                      <feat.icon className="w-5 h-5 text-emerald-100" />
-                      <span className="text-sm font-medium">{feat.label}</span>
-                    </motion.div>
-                  ))}
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold">Go Travel</h1>
+                <p className="text-emerald-200 text-xs font-medium tracking-wider">INDIA&apos;S TRAVEL COMPANION</p>
               </div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                className="relative z-10 text-emerald-200 text-xs"
-              >
-                Trusted by 2M+ travellers across India
-              </motion.p>
-            </motion.div>
-
-            {/* ───── Right form panel ───── */}
-            <div className="flex-1 flex flex-col justify-center p-6 sm:p-10 bg-white">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={mode}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {/* Mobile branding */}
-                  <div className="lg:hidden flex items-center gap-2 mb-6">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center">
-                      <Plane className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-xl font-bold text-gray-900">Go Travel</span>
-                  </div>
-
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-                  </h1>
-                  <p className="text-gray-500 text-sm mt-1 mb-6">
-                    {mode === 'login'
-                      ? 'Sign in to continue your journey'
-                      : 'Start your adventure with Go Travel'}
-                  </p>
-
-                  {/* Error / Success banners */}
-                  <AnimatePresence>
-                    {error && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
-                      >
-                        {error}
-                      </motion.div>
-                    )}
-                    {success && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 flex items-center gap-2"
-                      >
-                        <CheckCircle className="w-4 h-4 shrink-0" />
-                        {success}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* ── Name (register only) ── */}
-                    {mode === 'register' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.05 }}
-                      >
-                        <label className="block font-semibold text-xs uppercase text-gray-600 mb-1.5">
-                          Full Name
-                        </label>
-                        <div className="relative">
-                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            type="text"
-                            placeholder="John Doe"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-500"
-                            disabled={loading}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* ── Email ── */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                    >
-                      <label className="block font-semibold text-xs uppercase text-gray-600 mb-1.5">
-                        Email Address
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          type="email"
-                          placeholder="you@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-500"
-                          disabled={loading}
-                        />
-                      </div>
-                    </motion.div>
-
-                    {/* ── Phone (register only, optional) ── */}
-                    {mode === 'register' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
-                      >
-                        <label className="block font-semibold text-xs uppercase text-gray-600 mb-1.5">
-                          Phone Number{' '}
-                          <span className="text-gray-400 normal-case font-normal">(optional)</span>
-                        </label>
-                        <div className="relative">
-                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            type="tel"
-                            placeholder="+91 98765 43210"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="pl-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-500"
-                            disabled={loading}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* ── Password ── */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <label className="block font-semibold text-xs uppercase text-gray-600 mb-1.5">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-500"
-                          disabled={loading}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                          tabIndex={-1}
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      {mode === 'register' && password.length > 0 && password.length < 6 && (
-                        <p className="text-xs text-amber-600 mt-1">
-                          Password must be at least 6 characters.
-                        </p>
-                      )}
-                    </motion.div>
-
-                    {/* ── Confirm Password (register only) ── */}
-                    {mode === 'register' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.25 }}
-                      >
-                        <label className="block font-semibold text-xs uppercase text-gray-600 mb-1.5">
-                          Confirm Password
-                        </label>
-                        <div className="relative">
-                          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            type={showConfirm ? 'text' : 'password'}
-                            placeholder="••••••••"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className={`pl-10 pr-10 h-12 rounded-xl border-gray-200 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 ${
-                              confirmPassword && confirmPassword !== password
-                                ? 'border-red-300 focus-visible:ring-red-400 focus-visible:border-red-400'
-                                : ''
-                            }`}
-                            disabled={loading}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirm((v) => !v)}
-                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                            tabIndex={-1}
-                            aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
-                          >
-                            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                        {confirmPassword && confirmPassword !== password && (
-                          <p className="text-xs text-red-600 mt-1">Passwords do not match.</p>
-                        )}
-                        {confirmPassword && confirmPassword === password && (
-                          <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" /> Passwords match
-                          </p>
-                        )}
-                      </motion.div>
-                    )}
-
-                    {/* ── Submit button ── */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm mt-2 transition-colors"
-                      >
-                        {loading ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            {mode === 'login' ? 'Signing in…' : 'Creating account…'}
-                          </span>
-                        ) : (
-                          <span className="flex items-center justify-center gap-2">
-                            {mode === 'login' ? 'Sign In' : 'Create Account'}
-                            <ArrowRight className="w-4 h-4" />
-                          </span>
-                        )}
-                      </Button>
-                    </motion.div>
-                  </form>
-
-                  {/* ── Divider ── */}
-                  <div className="flex items-center gap-4 my-6">
-                    <Separator className="flex-1" />
-                    <span className="text-xs text-gray-400 uppercase">or</span>
-                    <Separator className="flex-1" />
-                  </div>
-
-                  {/* ── Toggle mode ── */}
-                  <p className="text-center text-sm text-gray-500">
-                    {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-                    <button
-                      type="button"
-                      onClick={toggleMode}
-                      className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
-                      disabled={loading}
-                    >
-                      {mode === 'login' ? 'Sign Up' : 'Sign In'}
-                    </button>
-                  </p>
-
-                  {/* ── Secure badge ── */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-400"
-                  >
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>Your data is encrypted and secure</span>
-                  </motion.div>
-                </motion.div>
-              </AnimatePresence>
             </div>
+
+            <h2 className="text-4xl xl:text-5xl font-extrabold leading-tight mb-4">
+              Your Journey{' '}
+              <span className="text-yellow-200">Starts Here</span>
+            </h2>
+            <p className="text-emerald-100 text-lg leading-relaxed mb-10 max-w-md">
+              Explore India&apos;s best destinations, compare flights, trains & buses, book local rides with GPS tracking — all in one platform.
+            </p>
+
+            <div className="space-y-4">
+              {[
+                { icon: '✈️', title: '50+ Airlines Compared', desc: 'Find the cheapest flights' },
+                { icon: '🚂', title: 'IRCTC Train Booking', desc: 'Real-time seat availability' },
+                { icon: '🛡️', title: "Women's Safety", desc: 'SOS alert with GPS tracking' },
+              ].map((feature, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
+                  className="flex items-start gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3"
+                >
+                  <span className="text-2xl">{feature.icon}</span>
+                  <div>
+                    <h3 className="font-bold text-sm">{feature.title}</h3>
+                    <p className="text-emerald-200 text-xs mt-0.5">{feature.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-12 flex items-center gap-2 text-emerald-200 text-xs"
+          >
+            <Shield className="w-4 h-4" />
+            <span>Trusted by 50L+ travelers across India</span>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Right Panel - Auth Form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+              <MapPin className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              Go Travel
+            </h1>
           </div>
-        </Card>
-      </motion.div>
+
+          {/* Back button */}
+          <button
+            onClick={() => setCurrentPage('home')}
+            className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-6"
+          >
+            <X className="w-4 h-4" /> Back to Home
+          </button>
+
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              {mode === 'login' ? 'Welcome Back!' : 'Create Account'}
+            </h2>
+            <p className="text-gray-500 mt-1">
+              {mode === 'login'
+                ? 'Sign in to access your bookings and rides'
+                : 'Join Go Travel and start exploring India'}
+            </p>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="bg-gray-100 rounded-xl p-1 flex mb-6">
+            {['login', 'signup'].map((m) => (
+              <button
+                key={m}
+                onClick={() => { setMode(m as 'login' | 'signup'); setErrors({}); }}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  mode === m
+                    ? 'bg-white text-emerald-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {m === 'login' ? 'Sign In' : 'Sign Up'}
+              </button>
+            ))}
+          </div>
+
+          {/* Form */}
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-5 sm:p-6 space-y-4">
+              {/* Name (signup only) */}
+              <AnimatePresence mode="wait">
+                {mode === 'signup' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-1"
+                  >
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      <User className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => { setName(e.target.value); setErrors((p) => ({ ...p, name: '' })); }}
+                      placeholder="Enter your full name"
+                      className={errors.name ? 'border-red-500' : ''}
+                    />
+                    {errors.name && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.name}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Email */}
+              <div className="space-y-1">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  <Mail className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: '' })); }}
+                  placeholder="you@example.com"
+                  className={errors.email ? 'border-red-500' : ''}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.email}
+                  </p>
+                )}
+              </div>
+
+              {/* Phone (signup only) */}
+              <AnimatePresence mode="wait">
+                {mode === 'signup' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-1"
+                  >
+                    <Label htmlFor="phone" className="text-sm font-medium">
+                      <Phone className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
+                      Phone Number <span className="text-gray-400 font-normal">(optional)</span>
+                    </Label>
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-sm text-gray-500">
+                        +91
+                      </span>
+                      <Input
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setErrors((p) => ({ ...p, phone: '' })); }}
+                        placeholder="10-digit mobile number"
+                        className="rounded-l-none"
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.phone}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  <Lock className="w-3.5 h-3.5 inline mr-1.5 text-gray-400" />
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: '' })); }}
+                    placeholder="Enter your password"
+                    className={`pr-10 ${errors.password ? 'border-red-500' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.password}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                onClick={mode === 'login' ? handleLogin : handleSignup}
+                disabled={loading}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-xl font-bold text-base shadow-lg shadow-emerald-200 disabled:opacity-50 transition-all"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {mode === 'login' ? 'Signing In...' : 'Creating Account...'}
+                  </>
+                ) : (
+                  <>
+                    {mode === 'login' ? 'Sign In' : 'Create Account'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
+
+              {/* Toggle Mode Link */}
+              <div className="text-center text-sm text-gray-500">
+                {mode === 'login' ? (
+                  <>
+                    Don&apos;t have an account?{' '}
+                    <button onClick={switchMode} className="text-emerald-600 font-semibold hover:underline">
+                      Sign Up
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{' '}
+                    <button onClick={switchMode} className="text-emerald-600 font-semibold hover:underline">
+                      Sign In
+                    </button>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security badge */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
+            <Shield className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Your data is encrypted and secure</span>
+            <Badge variant="secondary" className="text-[9px] ml-1">256-bit SSL</Badge>
+          </div>
+
+          {/* Mobile footer */}
+          <div className="lg:hidden mt-8 text-center text-xs text-gray-400">
+            <p className="flex items-center justify-center gap-1">
+              Made with <Heart className="w-3 h-3 text-red-400" /> in India
+            </p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }

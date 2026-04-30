@@ -1,63 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q') || '';
+
+  if (!query.trim()) {
+    return NextResponse.json(
+      { error: 'Search query is required' },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const q = searchParams.get('q');
-
-    if (!q || q.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Query parameter "q" is required' },
-        { status: 400 }
-      );
-    }
-
-    const encodedQuery = encodeURIComponent(q.trim());
-    const nominatimUrl =
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodedQuery}&countrycodes=in&limit=5`;
+    // Use Nominatim for geocoding with India bias
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=in&format=json&limit=8&addressdetails=1`;
 
     const response = await fetch(nominatimUrl, {
       headers: {
-        'User-Agent': 'GoTravel/1.0',
+        'User-Agent': 'GoTravel-App/1.0',
       },
       signal: AbortSignal.timeout(8000),
     });
 
     if (!response.ok) {
-      console.error('Nominatim API error:', response.status, response.statusText);
-      return NextResponse.json(
-        { error: 'Geocoding service unavailable' },
-        { status: 502 }
-      );
+      throw new Error(`Nominatim responded with status ${response.status}`);
     }
 
-    const data: Array<{
-      place_id: number;
-      display_name: string;
-      lat: string;
-      lon: string;
-      type: string;
-      importance: number;
-    }> = await response.json();
+    const data = await response.json();
 
-    const results = data.map((item) => ({
-      display_name: item.display_name,
-      lat: parseFloat(item.lat),
-      lon: parseFloat(item.lon),
-      type: item.type,
+    const results = data.map((item: Record<string, unknown>) => ({
+      displayName: item.display_name as string,
+      lat: parseFloat(item.lat as string),
+      lng: parseFloat(item.lon as string),
+      address: {
+        city: (item.address as Record<string, string>)?.city ||
+              (item.address as Record<string, string>)?.town ||
+              (item.address as Record<string, string>)?.village ||
+              '',
+        state: (item.address as Record<string, string>)?.state || '',
+        country: (item.address as Record<string, string>)?.country || '',
+        postcode: (item.address as Record<string, string>)?.postcode || '',
+        road: (item.address as Record<string, string>)?.road || '',
+      },
     }));
 
-    return NextResponse.json(results);
+    return NextResponse.json({ results });
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      return NextResponse.json(
-        { error: 'Geocoding request timed out' },
-        { status: 504 }
-      );
-    }
     console.error('Geocoding error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch geocoding results' },
+      { error: 'Failed to geocode address' },
       { status: 500 }
     );
   }

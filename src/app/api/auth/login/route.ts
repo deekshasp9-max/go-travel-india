@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
+import bcrypt from 'bcrypt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,36 +8,49 @@ export async function POST(request: NextRequest) {
     const { email, password } = body;
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Email and password are required' },
+        { status: 400 }
+      );
     }
 
-    const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
+    // Find user by email
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
     if (!user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { error: 'Invalid email or password' },
+        { status: 401 }
+      );
     }
 
-    const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
+    // Generate a simple token (cuid-based)
+    const token = `gt_${user.id}_${Date.now()}`;
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
-      message: 'Login successful!',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        avatar: user.avatar,
-        role: user.role,
-        createdAt: user.createdAt,
-      },
+      user: userWithoutPassword,
       token,
     });
-  } catch (error: any) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Login failed. Please try again.' }, { status: 500 });
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    return NextResponse.json(
+      { error: 'Failed to log in' },
+      { status: 500 }
+    );
   }
 }

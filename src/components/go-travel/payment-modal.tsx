@@ -1,27 +1,21 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { createPortal } from "react-dom";
+import { useState, useCallback, useMemo } from 'react';
 import {
-  X,
-  CreditCard,
-  Smartphone,
-  Building2,
-  Wallet,
-  Clock,
-  Mail,
-  ChevronRight,
-  Check,
-  Shield,
-  ArrowLeft,
-  QrCode,
-  Loader2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CreditCard, Smartphone, Building2, Wallet, Clock, Mail,
+  CheckCircle, X, Loader2, Shield, IndianRupee, Copy, QrCode,
+  ArrowLeft, ChevronRight, Lock, AlertCircle, Info
+} from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,881 +25,608 @@ interface PaymentModalProps {
   amount: number;
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (method: string) => void;
+  onSuccess: (paymentMethod: string) => void;
 }
 
-type PaymentCategory =
-  | "upi"
-  | "cards"
-  | "netbanking"
-  | "wallets"
-  | "paylater"
-  | "emaillink";
-
-type ModalView = "main" | "processing" | "success";
-
-interface PaymentOption {
-  id: string;
-  label: string;
-  sublabel?: string;
-  icon: React.ReactNode;
-  color?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Static data
-// ---------------------------------------------------------------------------
-
-const CATEGORY_META: {
-  id: PaymentCategory;
-  label: string;
-  icon: React.ReactNode;
-}[] = [
-  { id: "upi", label: "UPI", icon: <Smartphone className="size-4" /> },
-  {
-    id: "cards",
-    label: "Cards",
-    icon: <CreditCard className="size-4" />,
-  },
-  {
-    id: "netbanking",
-    label: "Net Banking",
-    icon: <Building2 className="size-4" />,
-  },
-  { id: "wallets", label: "Wallets", icon: <Wallet className="size-4" /> },
-  {
-    id: "paylater",
-    label: "Pay Later",
-    icon: <Clock className="size-4" />,
-  },
-  {
-    id: "emaillink",
-    label: "Email Link",
-    icon: <Mail className="size-4" />,
-  },
-];
-
-const UPI_OPTIONS: PaymentOption[] = [
-  {
-    id: "gpay",
-    label: "Google Pay",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-lg bg-white shadow-sm border text-[10px] font-bold text-gray-800">
-        G
-      </span>
-    ),
-  },
-  {
-    id: "phonepe",
-    label: "PhonePe",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-lg bg-purple-600 text-[10px] font-bold text-white">
-        P
-      </span>
-    ),
-  },
-  {
-    id: "paytm",
-    label: "Paytm",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-lg bg-sky-500 text-[10px] font-bold text-white">
-        PT
-      </span>
-    ),
-  },
-  {
-    id: "bhim",
-    label: "BHIM UPI",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-lg bg-green-600 text-[10px] font-bold text-white">
-        B
-      </span>
-    ),
-  },
-  {
-    id: "qrcode",
-    label: "QR Code",
-    icon: <QrCode className="size-5 text-gray-700" />,
-  },
-  {
-    id: "upiid",
-    label: "Enter UPI ID",
-    sublabel: "e.g. name@upi",
-    icon: (
-      <span className="flex size-8 items-center justify-center rounded-lg bg-gray-100">
-        <Smartphone className="size-4 text-gray-500" />
-      </span>
-    ),
-  },
-];
-
-const CARD_BRANDS = [
-  { id: "visa", label: "Visa", color: "bg-blue-700" },
-  { id: "mastercard", label: "Mastercard", color: "bg-red-600" },
-  { id: "rupay", label: "RuPay", color: "bg-green-700" },
-  { id: "amex", label: "Amex", color: "bg-blue-500" },
-];
-
-const BANKS: PaymentOption[] = [
-  { id: "sbi", label: "State Bank of India", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-blue-900 text-[10px] font-bold text-white">SBI</span> },
-  { id: "hdfc", label: "HDFC Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-red-600 text-[10px] font-bold text-white">H</span> },
-  { id: "icici", label: "ICICI Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-orange-500 text-[10px] font-bold text-white">I</span> },
-  { id: "axis", label: "Axis Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-red-700 text-[10px] font-bold text-white">A</span> },
-  { id: "kotak", label: "Kotak Mahindra Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-yellow-500 text-[10px] font-bold text-red-900">K</span> },
-  { id: "pnb", label: "Punjab National Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-orange-600 text-[10px] font-bold text-white">P</span> },
-  { id: "bob", label: "Bank of Baroda", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-yellow-600 text-[10px] font-bold text-white">B</span> },
-  { id: "canara", label: "Canara Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-yellow-400 text-[10px] font-bold text-gray-900">C</span> },
-  { id: "union", label: "Union Bank of India", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-blue-600 text-[10px] font-bold text-white">U</span> },
-  { id: "indusind", label: "IndusInd Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-[10px] font-bold text-white">IN</span> },
-  { id: "yes", label: "Yes Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-pink-600 text-[10px] font-bold text-white">Y</span> },
-  { id: "idfc", label: "IDFC First Bank", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-teal-600 text-[10px] font-bold text-white">ID</span> },
-];
-
-const WALLETS: PaymentOption[] = [
-  { id: "paytm_wallet", label: "Paytm Wallet", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-sky-500 text-[10px] font-bold text-white">PT</span> },
-  { id: "amazon_pay", label: "Amazon Pay", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-amber-500 text-[10px] font-bold text-white">A</span> },
-  { id: "phonepe_wallet", label: "PhonePe Wallet", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-purple-600 text-[10px] font-bold text-white">P</span> },
-  { id: "mobikwik", label: "Mobikwik", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-red-500 text-[10px] font-bold text-white">M</span> },
-  { id: "freecharge", label: "Freecharge", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-orange-500 text-[10px] font-bold text-white">FC</span> },
-  { id: "jiomoney", label: "Jio Money", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-blue-700 text-[10px] font-bold text-white">J</span> },
-];
-
-const PAY_LATER: PaymentOption[] = [
-  { id: "simpl", label: "Simpl", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-violet-600 text-[10px] font-bold text-white">S</span> },
-  { id: "lazypay", label: "LazyPay", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-cyan-600 text-[10px] font-bold text-white">LP</span> },
-  { id: "slice", label: "Slice", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-purple-500 text-[10px] font-bold text-white">SL</span> },
-  { id: "flipkart_paylater", label: "Flipkart Pay Later", icon: <span className="flex size-8 items-center justify-center rounded-lg bg-yellow-500 text-[10px] font-bold text-blue-900">F</span> },
-];
-
-const OFFERS = [
-  { code: "GOTRAVEL20", discount: "20% off", max: "up to ₹500", color: "bg-emerald-50 border-emerald-200 text-emerald-800" },
-  { code: "FIRST100", discount: "₹100 off", max: "on first booking", color: "bg-orange-50 border-orange-200 text-orange-800" },
-  { code: "WEEKEND", discount: "15% off", max: "weekend trips", color: "bg-violet-50 border-violet-200 text-violet-800" },
-];
+type PaymentTab = 'upi' | 'card' | 'netbanking' | 'wallets' | 'paylater' | 'email';
+type ProcessingState = 'idle' | 'processing' | 'success';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function detectCardBrand(number: string): string | null {
-  const cleaned = number.replace(/\s/g, "");
-  if (/^4/.test(cleaned)) return "Visa";
-  if (/^5[1-5]/.test(cleaned) || /^2[2-7]/.test(cleaned)) return "Mastercard";
-  if (/^6/.test(cleaned)) return "RuPay";
-  if (/^3[47]/.test(cleaned)) return "Amex";
-  return null;
-}
-
-function formatCardNumber(value: string): string {
-  const cleaned = value.replace(/\D/g, "").slice(0, 19);
-  const groups = cleaned.match(/.{1,4}/g);
-  return groups ? groups.join(" ") : cleaned;
-}
-
-function formatExpiry(value: string): string {
-  const cleaned = value.replace(/\D/g, "").slice(0, 4);
-  if (cleaned.length >= 3) return cleaned.slice(0, 2) + "/" + cleaned.slice(2);
-  return cleaned;
-}
-
-function generateTransactionId(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "TXN";
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
 function formatINR(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR',
+    minimumFractionDigits: 0, maximumFractionDigits: 0,
   }).format(amount);
 }
 
+function generateTransactionId(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = 'GT';
+  for (let i = 0; i < 14; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+function detectCardBrand(number: string): string {
+  const n = number.replace(/\s/g, '');
+  if (/^4/.test(n)) return 'VISA';
+  if (/^5[1-5]/.test(n)) return 'MASTERCARD';
+  if (/^3[47]/.test(n)) return 'AMEX';
+  if (/^6(?:011|5)/.test(n)) return 'DISCOVER';
+  if (/^35(2[89]|[3-8])/.test(n)) return 'JCB';
+  return '';
+}
+
+function formatCardNumber(value: string): string {
+  const v = value.replace(/\D/g, '').slice(0, 16);
+  return v.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+function formatExpiry(value: string): string {
+  const v = value.replace(/\D/g, '').slice(0, 4);
+  return v.length > 2 ? `${v.slice(0, 2)}/${v.slice(2)}` : v;
+}
+
 // ---------------------------------------------------------------------------
-// Component
+// UPI QR Code Component (SVG-based)
 // ---------------------------------------------------------------------------
 
-export default function PaymentModal({
-  amount,
-  isOpen,
-  onClose,
-  onSuccess,
-}: PaymentModalProps) {
-  // -- State -----------------------------------------------------------------
-  const [activeCategory, setActiveCategory] = useState<PaymentCategory>("upi");
-  const [view, setView] = useState<ModalView>("main");
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState("");
-  const [methodName, setMethodName] = useState("");
+function UPIQRCode({ upiId, amount }: { upiId: string; amount: number }) {
+  const upiLink = `upi://pay?pa=${upiId}&pn=GoTravel&am=${amount}&cu=INR`;
+  const [copied, setCopied] = useState(false);
 
-  // Form state
-  const [upiId, setUpiId] = useState("");
-  const [upiError, setUpiError] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardBrand, setCardBrand] = useState<string | null>(null);
-  const [emailAddress, setEmailAddress] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const copyLink = useCallback(() => {
+    navigator.clipboard?.writeText(upiLink).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [upiLink]);
 
-  // -- Effects ---------------------------------------------------------------
-
-  // Reset state on open/close
-  useEffect(() => {
-    if (isOpen) {
-      setView("main");
-      setActiveCategory("upi");
-      setSelectedMethod(null);
-      setUpiId("");
-      setUpiError("");
-      setCardNumber("");
-      setCardExpiry("");
-      setCardCvv("");
-      setCardName("");
-      setCardBrand(null);
-      setEmailAddress("");
-      setEmailError("");
-      setTransactionId("");
-      setMethodName("");
-    }
-  }, [isOpen]);
-
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
+  // Simple QR-code-like pattern (visual placeholder) - using useMemo to avoid ref-during-render
+  const cells = useMemo(() => {
+    const grid = Array.from({ length: 21 }, () =>
+      Array.from({ length: 21 }, () => Math.random() > 0.5)
+    );
+    const setFinder = (r: number, c: number) => {
+      for (let dr = -2; dr <= 2; dr++)
+        for (let dc = -2; dc <= 2; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < 21 && nc >= 0 && nc < 21)
+            grid[nr][nc] = Math.abs(dr) === 2 || Math.abs(dc) === 2 || (dr === 0 && dc === 0);
+        }
     };
-  }, [isOpen]);
-
-  // Auto-detect card brand
-  useEffect(() => {
-    setCardBrand(detectCardBrand(cardNumber));
-  }, [cardNumber]);
-
-  // Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && view === "main") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, view, onClose]);
-
-  // -- Handlers --------------------------------------------------------------
-
-  const handlePay = useCallback(() => {
-    if (!selectedMethod) return;
-
-    let valid = true;
-    let methodLabel = selectedMethod;
-
-    // Validate based on category
-    if (activeCategory === "upi" && selectedMethod === "upiid") {
-      if (!upiId.includes("@")) {
-        setUpiError("Please enter a valid UPI ID (e.g. name@upi)");
-        valid = false;
-      } else {
-        setUpiError("");
-        methodLabel = `UPI: ${upiId}`;
-      }
-    }
-
-    if (activeCategory === "cards" && selectedMethod === "new_card") {
-      if (cardNumber.replace(/\s/g, "").length < 13) {
-        valid = false;
-      }
-      if (cardExpiry.length < 5) valid = false;
-      if (cardCvv.length < 3) valid = false;
-      if (!cardName.trim()) valid = false;
-      if (valid) {
-        methodLabel = `${cardBrand || "Card"} ending ${cardNumber.replace(/\s/g, "").slice(-4)}`;
-      }
-    }
-
-    if (activeCategory === "emaillink") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(emailAddress)) {
-        setEmailError("Please enter a valid email address");
-        valid = false;
-      } else {
-        setEmailError("");
-        methodLabel = `Email: ${emailAddress}`;
-      }
-    }
-
-    if (!valid) return;
-
-    setMethodName(methodLabel);
-    setView("processing");
-
-    setTimeout(() => {
-      setTransactionId(generateTransactionId());
-      setView("success");
-      setTimeout(() => {
-        onSuccess(methodLabel);
-      }, 2500);
-    }, 2000);
-  }, [
-    selectedMethod,
-    activeCategory,
-    upiId,
-    cardNumber,
-    cardExpiry,
-    cardCvv,
-    cardName,
-    cardBrand,
-    emailAddress,
-    onSuccess,
-  ]);
-
-  const handleOptionSelect = useCallback((id: string) => {
-    setSelectedMethod(id);
-    setUpiError("");
-    setEmailError("");
+    setFinder(3, 3);
+    setFinder(3, 17);
+    setFinder(17, 3);
+    return grid;
   }, []);
 
-  const getMethodLabel = useCallback(
-    (option: PaymentOption) => option.label,
-    []
-  );
-
-  // Options list per category
-  const currentOptions = useMemo(() => {
-    switch (activeCategory) {
-      case "upi":
-        return UPI_OPTIONS;
-      case "cards":
-        return [
-          ...CARD_BRANDS.map((b) => ({
-            id: b.id,
-            label: b.label,
-            icon: (
-              <span
-                className={cn(
-                  "flex size-8 items-center justify-center rounded-lg text-[10px] font-bold text-white",
-                  b.color
-                )}
-              >
-                {b.label.slice(0, 2).toUpperCase()}
-              </span>
-            ),
-          })),
-          {
-            id: "new_card",
-            label: "Add New Card",
-            sublabel: "Visa, Mastercard, RuPay, Amex",
-            icon: (
-              <span className="flex size-8 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-400">
-                <CreditCard className="size-4" />
-              </span>
-            ),
-          },
-        ];
-      case "netbanking":
-        return BANKS;
-      case "wallets":
-        return WALLETS;
-      case "paylater":
-        return PAY_LATER;
-      case "emaillink":
-        return [];
-      default:
-        return [];
-    }
-  }, [activeCategory]);
-
-  const showPayButton = useMemo(() => {
-    if (activeCategory === "emaillink") return true;
-    if (activeCategory === "cards" && selectedMethod === "new_card") return true;
-    if (activeCategory === "upi" && selectedMethod === "upiid") return true;
-    if (activeCategory === "upi" && selectedMethod === "qrcode") return false;
-    return !!selectedMethod;
-  }, [activeCategory, selectedMethod]);
-
-  // -- Portal ---------------------------------------------------------------
-
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center md:items-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Payment gateway"
-    >
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={view === "main" ? onClose : undefined}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        className={cn(
-          "relative z-10 flex flex-col overflow-hidden bg-white shadow-2xl",
-          "w-full h-full md:h-auto md:max-h-[90vh] md:max-w-[540px]",
-          "rounded-none md:rounded-2xl",
-          "animate-in slide-in-from-bottom md:slide-in-from-bottom-4 fade-in duration-300"
-        )}
-      >
-        {/* ---- Main View ---- */}
-        {view === "main" && (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <h2 className="text-lg font-semibold text-gray-900">Payment</h2>
-              <button
-                onClick={onClose}
-                className="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                aria-label="Close payment modal"
-              >
-                <X className="size-5 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Amount + Offers */}
-            <div className="border-b px-5 py-4 bg-gradient-to-r from-gray-50 to-white">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-gray-900">
-                  {formatINR(amount)}
-                </span>
-                <span className="text-sm text-gray-500">to pay</span>
-              </div>
-
-              {/* Offers */}
-              <div className="mt-3 space-y-2">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Available Offers
-                </p>
-                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  {OFFERS.map((offer) => (
-                    <div
-                      key={offer.code}
-                      className={cn(
-                        "flex-shrink-0 flex items-center gap-2 rounded-lg border px-3 py-2",
-                        offer.color
-                      )}
-                    >
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-white/70 border-0 font-mono">
-                        {offer.code}
-                      </Badge>
-                      <span className="text-xs font-medium whitespace-nowrap">
-                        {offer.discount} {offer.max}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Body: Category Sidebar + Content */}
-            <div className="flex flex-1 min-h-0">
-              {/* Sidebar Categories */}
-              <nav className="w-[110px] md:w-[120px] flex-shrink-0 border-r bg-gray-50/80 overflow-y-auto">
-                <ul className="py-2 space-y-0.5">
-                  {CATEGORY_META.map((cat) => (
-                    <li key={cat.id}>
-                      <button
-                        onClick={() => {
-                          setActiveCategory(cat.id);
-                          setSelectedMethod(null);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium transition-colors",
-                          activeCategory === cat.id
-                            ? "bg-white text-primary shadow-sm border-r-2 border-primary"
-                            : "text-gray-600 hover:bg-white/60 hover:text-gray-900"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex items-center justify-center",
-                            activeCategory === cat.id
-                              ? "text-primary"
-                              : "text-gray-400"
-                          )}
-                        >
-                          {cat.icon}
-                        </span>
-                        <span className="leading-tight">{cat.label}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-
-              {/* Content Area */}
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="flex-1 overflow-y-auto p-4">
-                  {/* Email Link Category */}
-                  {activeCategory === "emaillink" ? (
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          Send Payment Link
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter an email address and we&apos;ll send a payment link.
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <label
-                            htmlFor="email-link"
-                            className="text-xs font-medium text-gray-700 mb-1 block"
-                          >
-                            Email Address
-                          </label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
-                            <Input
-                              id="email-link"
-                              type="email"
-                              placeholder="you@example.com"
-                              value={emailAddress}
-                              onChange={(e) => {
-                                setEmailAddress(e.target.value);
-                                if (emailError) setEmailError("");
-                              }}
-                              className="pl-9"
-                            />
-                          </div>
-                          {emailError && (
-                            <p className="text-xs text-red-500 mt-1">
-                              {emailError}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {currentOptions.map((option) => {
-                        const isSelected = selectedMethod === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            onClick={() => handleOptionSelect(option.id)}
-                            className={cn(
-                              "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all",
-                              isSelected
-                                ? "bg-primary/5 border border-primary/20 shadow-sm"
-                                : "hover:bg-gray-50 border border-transparent"
-                            )}
-                          >
-                            <div className="flex-shrink-0">{option.icon}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {option.label}
-                              </p>
-                              {option.sublabel && (
-                                <p className="text-xs text-gray-500 truncate">
-                                  {option.sublabel}
-                                </p>
-                              )}
-                            </div>
-                            {isSelected ? (
-                              <div className="flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary">
-                                <Check className="size-3 text-white" />
-                              </div>
-                            ) : (
-                              <ChevronRight className="size-4 text-gray-300 flex-shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Sub-forms */}
-
-                  {/* UPI ID input */}
-                  {activeCategory === "upi" && selectedMethod === "upiid" && (
-                    <div className="mt-4 pl-11">
-                      <label
-                        htmlFor="upi-id"
-                        className="text-xs font-medium text-gray-700 mb-1 block"
-                      >
-                        UPI ID
-                      </label>
-                      <Input
-                        id="upi-id"
-                        type="text"
-                        placeholder="name@upi"
-                        value={upiId}
-                        onChange={(e) => {
-                          setUpiId(e.target.value.toLowerCase());
-                          if (upiError) setUpiError("");
-                        }}
-                        className={cn(
-                          upiError && "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20"
-                        )}
-                      />
-                      {upiError && (
-                        <p className="text-xs text-red-500 mt-1">{upiError}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* QR Code placeholder */}
-                  {activeCategory === "upi" && selectedMethod === "qrcode" && (
-                    <div className="mt-4 pl-11">
-                      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-gray-300 p-6 bg-gray-50/50">
-                        <div className="size-32 rounded-xl bg-white shadow-sm border flex items-center justify-center">
-                          <QrCode className="size-20 text-gray-300" />
-                        </div>
-                        <p className="text-xs text-gray-500 text-center">
-                          Scan this QR code with any UPI app to pay{" "}
-                          <span className="font-semibold text-gray-900">
-                            {formatINR(amount)}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Add New Card form */}
-                  {activeCategory === "cards" && selectedMethod === "new_card" && (
-                    <div className="mt-4 pl-11 space-y-3">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Card Details
-                      </p>
-
-                      {/* Card Number */}
-                      <div>
-                        <label
-                          htmlFor="card-number"
-                          className="text-xs font-medium text-gray-700 mb-1 block"
-                        >
-                          Card Number
-                        </label>
-                        <div className="relative">
-                          <Input
-                            id="card-number"
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="1234 5678 9012 3456"
-                            value={cardNumber}
-                            onChange={(e) =>
-                              setCardNumber(formatCardNumber(e.target.value))
-                            }
-                            maxLength={19}
-                            className="pr-16"
-                          />
-                          {cardBrand && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">
-                              {cardBrand}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expiry + CVV */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label
-                            htmlFor="card-expiry"
-                            className="text-xs font-medium text-gray-700 mb-1 block"
-                          >
-                            Expiry
-                          </label>
-                          <Input
-                            id="card-expiry"
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="MM/YY"
-                            value={cardExpiry}
-                            onChange={(e) =>
-                              setCardExpiry(formatExpiry(e.target.value))
-                            }
-                            maxLength={5}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            htmlFor="card-cvv"
-                            className="text-xs font-medium text-gray-700 mb-1 block"
-                          >
-                            CVV
-                          </label>
-                          <Input
-                            id="card-cvv"
-                            type="password"
-                            inputMode="numeric"
-                            placeholder="•••"
-                            value={cardCvv}
-                            onChange={(e) =>
-                              setCardCvv(
-                                e.target.value.replace(/\D/g, "").slice(0, 4)
-                              )
-                            }
-                            maxLength={4}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Name */}
-                      <div>
-                        <label
-                          htmlFor="card-name"
-                          className="text-xs font-medium text-gray-700 mb-1 block"
-                        >
-                          Name on Card
-                        </label>
-                        <Input
-                          id="card-name"
-                          type="text"
-                          placeholder="John Doe"
-                          value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer - Pay Button */}
-                <div className="border-t px-4 py-3 bg-white flex-shrink-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="size-3.5 text-gray-400" />
-                    <span className="text-[11px] text-gray-400">
-                      Secured by 256-bit SSL encryption
-                    </span>
-                  </div>
-                  <Button
-                    onClick={handlePay}
-                    disabled={
-                      !showPayButton ||
-                      (activeCategory === "upi" && selectedMethod === "qrcode")
-                    }
-                    className="w-full h-11 text-sm font-semibold rounded-xl"
-                    size="lg"
-                  >
-                    {formatINR(amount)}
-                    {activeCategory === "emaillink"
-                      ? " — Send Link"
-                      : " — Pay Now"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ---- Processing View ---- */}
-        {view === "processing" && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 gap-6">
-            <div className="relative">
-              <div className="size-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="size-8 text-primary animate-spin" style={{ animationDirection: "reverse" }} />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <p className="text-lg font-semibold text-gray-900">
-                Processing Payment
-              </p>
-              <p className="text-sm text-gray-500">
-                Please wait while we process your payment of{" "}
-                <span className="font-semibold text-gray-700">
-                  {formatINR(amount)}
-                </span>
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                via {methodName}
-              </p>
-            </div>
-            {/* Progress dots */}
-            <div className="flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="size-2 rounded-full bg-primary animate-pulse"
-                  style={{ animationDelay: `${i * 300}ms` }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ---- Success View ---- */}
-        {view === "success" && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 gap-5">
-            {/* Green checkmark */}
-            <div className="relative">
-              <div className="size-20 rounded-full bg-green-100 flex items-center justify-center animate-in zoom-in duration-500">
-                <div className="size-14 rounded-full bg-green-500 flex items-center justify-center animate-in zoom-in duration-700">
-                  <Check className="size-8 text-white" strokeWidth={3} />
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-200">
-              <p className="text-xl font-bold text-gray-900">
-                Payment Successful!
-              </p>
-              <p className="text-sm text-gray-500">
-                <span className="font-semibold text-gray-700">
-                  {formatINR(amount)}
-                </span>{" "}
-                has been paid
-              </p>
-            </div>
-
-            {/* Transaction details */}
-            <div className="w-full max-w-xs space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-400">
-              <div className="rounded-xl bg-gray-50 border p-4 space-y-2.5">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Transaction ID</span>
-                  <span className="font-mono font-semibold text-gray-900 text-xs">
-                    {transactionId}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Method</span>
-                  <span className="font-medium text-gray-900">
-                    {methodName}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Status</span>
-                  <Badge className="bg-green-100 text-green-800 border-0">
-                    Confirmed
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Close button */}
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 delay-500">
-              <Button
-                onClick={onClose}
-                variant="outline"
-                className="rounded-xl px-8"
-                size="lg"
-              >
-                Done
-              </Button>
-            </div>
-          </div>
-        )}
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="bg-white p-3 rounded-xl border-2 border-gray-200">
+        <svg width="160" height="160" viewBox="0 0 21 21" className="w-40 h-40">
+          {cells.map((row, r) =>
+            row.map((cell, c) =>
+              cell ? (
+                <rect key={`${r}-${c}`} x={c} y={r} width="1" height="1" fill="#1a1a1a" />
+              ) : null
+            )
+          )}
+        </svg>
       </div>
-    </div>,
-    document.body
+      <div className="text-center">
+        <p className="text-xs text-gray-500">Scan with any UPI app</p>
+        <p className="text-sm font-semibold text-gray-700 mt-1">GoTravel@upi</p>
+        <p className="text-xs text-emerald-600 font-bold mt-0.5">{formatINR(amount)}</p>
+      </div>
+      <button
+        onClick={copyLink}
+        className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+      >
+        {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        {copied ? 'Copied!' : 'Copy UPI Link'}
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Payment Modal Component
+// ---------------------------------------------------------------------------
+
+export default function PaymentModal({ amount, isOpen, onClose, onSuccess }: PaymentModalProps) {
+  const [activeTab, setActiveTab] = useState<PaymentTab>('upi');
+  const [state, setState] = useState<ProcessingState>('idle');
+  const [txnId, setTxnId] = useState('');
+
+  // UPI state
+  const [upiId, setUpiId] = useState('');
+  const [upiError, setUpiError] = useState('');
+
+  // Card state
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+
+  // Net Banking state
+  const [selectedBank, setSelectedBank] = useState('');
+
+  // Wallet state
+  const [selectedWallet, setSelectedWallet] = useState('');
+
+  // Pay Later state
+  const [selectedPayLater, setSelectedPayLater] = useState('');
+
+  // Email state
+  const [payEmail, setPayEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+
+  const brand = detectCardBrand(cardNumber);
+  const brandColors: Record<string, string> = {
+    VISA: 'bg-blue-600', MASTERCARD: 'bg-red-500', AMEX: 'bg-green-600',
+    DISCOVER: 'bg-orange-500', JCB: 'bg-green-700',
+  };
+
+  const resetAll = useCallback(() => {
+    setState('idle');
+    setTxnId('');
+    setUpiId(''); setUpiError('');
+    setCardNumber(''); setCardExpiry(''); setCardCvv(''); setCardName(''); setCardErrors({});
+    setSelectedBank(''); setSelectedWallet(''); setSelectedPayLater('');
+    setPayEmail(''); setEmailError('');
+    setActiveTab('upi');
+  }, []);
+
+  const handleClose = useCallback(() => {
+    if (state === 'processing') return;
+    resetAll();
+    onClose();
+  }, [state, resetAll, onClose]);
+
+  const processPayment = useCallback((method: string) => {
+    setState('processing');
+    const id = generateTransactionId();
+    setTxnId(id);
+    setTimeout(() => {
+      setState('success');
+      setTimeout(() => {
+        onSuccess(method);
+        resetAll();
+      }, 1500);
+    }, 2000);
+  }, [onSuccess, resetAll]);
+
+  // Validate & pay UPI
+  const handleUPIPay = useCallback(() => {
+    const id = upiId.trim();
+    if (!id) { setUpiError('Please enter your UPI ID'); return; }
+    if (!/^[a-zA-Z0-9._-]+@[a-zA-Z]{2,}$/.test(id)) { setUpiError('Invalid UPI ID format (e.g., name@bank)'); return; }
+    setUpiError('');
+    processPayment(`UPI: ${id}`);
+  }, [upiId, processPayment]);
+
+  // Validate & pay Card
+  const handleCardPay = useCallback(() => {
+    const errs: Record<string, string> = {};
+    const num = cardNumber.replace(/\s/g, '');
+    if (num.length < 15) errs.number = 'Enter a valid card number';
+    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) errs.expiry = 'Enter MM/YY';
+    else {
+      const [mm, yy] = cardExpiry.split('/').map(Number);
+      if (mm < 1 || mm > 12) errs.expiry = 'Invalid month';
+    }
+    if (cardCvv.length < 3) errs.cvv = 'Enter CVV';
+    if (!cardName.trim()) errs.name = 'Enter cardholder name';
+    setCardErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    processPayment(`Card: ${brand || 'Debit/Credit'} ending ${num.slice(-4)}`);
+  }, [cardNumber, cardExpiry, cardCvv, cardName, brand, processPayment]);
+
+  // Pay Net Banking
+  const handleNetBankingPay = useCallback(() => {
+    if (!selectedBank) return;
+    processPayment(`Net Banking: ${selectedBank}`);
+  }, [selectedBank, processPayment]);
+
+  // Pay Wallet
+  const handleWalletPay = useCallback(() => {
+    if (!selectedWallet) return;
+    processPayment(`Wallet: ${selectedWallet}`);
+  }, [selectedWallet, processPayment]);
+
+  // Pay Later
+  const handlePayLaterPay = useCallback(() => {
+    if (!selectedPayLater) return;
+    processPayment(`Pay Later: ${selectedPayLater}`);
+  }, [selectedPayLater, processPayment]);
+
+  // Pay Email Link
+  const handleEmailPay = useCallback(() => {
+    if (!payEmail.trim()) { setEmailError('Please enter your email'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payEmail)) { setEmailError('Enter a valid email'); return; }
+    setEmailError('');
+    processPayment(`Email Link: ${payEmail}`);
+  }, [payEmail, processPayment]);
+
+  // Tab configuration
+  const tabs: { id: PaymentTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'upi', label: 'UPI', icon: <Smartphone className="w-4 h-4" /> },
+    { id: 'card', label: 'Cards', icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'netbanking', label: 'Net Banking', icon: <Building2 className="w-4 h-4" /> },
+    { id: 'wallets', label: 'Wallets', icon: <Wallet className="w-4 h-4" /> },
+    { id: 'paylater', label: 'Pay Later', icon: <Clock className="w-4 h-4" /> },
+    { id: 'email', label: 'Email Link', icon: <Mail className="w-4 h-4" /> },
+  ];
+
+  // Bank list for net banking
+  const banks = [
+    'SBI', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra',
+    'Punjab National Bank', 'Bank of Baroda', 'Canara Bank', 'Union Bank of India', 'IndusInd Bank',
+  ];
+
+  // Wallets list
+  const wallets = [
+    { name: 'Paytm', icon: '📱' },
+    { name: 'PhonePe', icon: '💜' },
+    { name: 'Amazon Pay', icon: '📦' },
+    { name: 'Freecharge', icon: '⚡' },
+    { name: 'MobiKwik', icon: '💰' },
+    { name: 'Jio Money', icon: '🔵' },
+  ];
+
+  // Pay Later list
+  const payLaterOptions = [
+    { name: 'LazyPay', icon: '🌙' },
+    { name: 'Simpl', icon: '✨' },
+    { name: 'Ola Postpaid', icon: '🚗' },
+    { name: 'Amazon Pay Later', icon: '📦' },
+  ];
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="sm:max-w-lg max-w-[95vw] p-0 overflow-hidden" onPointerDownOutside={(e) => state === 'processing' && e.preventDefault()}>
+        {/* Processing overlay */}
+        <AnimatePresence>
+          {state === 'processing' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center"
+            >
+              <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-4" />
+              <p className="text-lg font-bold text-gray-900">Processing Payment...</p>
+              <p className="text-sm text-gray-500 mt-1">Please do not close this window</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Success overlay */}
+        <AnimatePresence>
+          {state === 'success' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.2 }}
+              >
+                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                  <CheckCircle className="w-10 h-10 text-emerald-600" />
+                </div>
+              </motion.div>
+              <h2 className="text-xl font-bold text-gray-900">Payment Successful!</h2>
+              <p className="text-sm text-gray-500 mt-1">{formatINR(amount)} paid</p>
+              {txnId && (
+                <p className="text-xs text-gray-400 mt-2 font-mono">Txn: {txnId}</p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-4 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Secure Payment
+            </DialogTitle>
+            <DialogDescription className="text-emerald-100 text-sm">
+              Your payment information is encrypted and secure
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        {/* Amount bar */}
+        <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IndianRupee className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm text-gray-500">Amount to pay</span>
+          </div>
+          <span className="text-xl font-extrabold text-emerald-700">{formatINR(amount)}</span>
+        </div>
+
+        {/* Payment method tabs */}
+        <div className="px-3 pt-3">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as PaymentTab)} className="w-full">
+            <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 h-auto p-1 bg-gray-100 rounded-xl gap-0.5">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className="text-[10px] sm:text-xs py-2 px-1 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-emerald-700 text-gray-500 gap-0.5 flex items-center justify-center"
+                >
+                  {tab.icon}
+                  <span className="hidden sm:inline ml-1">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {/* UPI Tab */}
+            <TabsContent value="upi" className="mt-4 px-2 pb-4">
+              <div className="space-y-4">
+                <UPIQRCode upiId="gotravel@ybl" amount={amount} />
+
+                <Separator />
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Or enter UPI ID</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      value={upiId}
+                      onChange={(e) => { setUpiId(e.target.value); setUpiError(''); }}
+                      placeholder="yourname@upi"
+                      className="flex-1"
+                    />
+                    <Button onClick={handleUPIPay} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6">
+                      Pay {formatINR(amount)}
+                    </Button>
+                  </div>
+                  {upiError && (
+                    <p className="text-xs text-red-500 flex items-center gap-1 mt-1.5">
+                      <AlertCircle className="w-3 h-3" /> {upiError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Cards Tab */}
+            <TabsContent value="card" className="mt-4 px-2 pb-4">
+              <div className="space-y-3">
+                {/* Card Preview */}
+                <div className={`relative rounded-2xl p-5 text-white ${brandColors[brand] || 'bg-gray-700'} transition-colors duration-300`}>
+                  <div className="flex items-center justify-between mb-8">
+                    <span className="text-sm font-bold tracking-wider">{brand || 'CARD'}</span>
+                    <CreditCard className="w-8 h-8 opacity-50" />
+                  </div>
+                  <p className="text-lg font-mono tracking-widest mb-4">
+                    {cardNumber || '•••• •••• •••• ••••'}
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="text-[10px] opacity-60 uppercase">Card Holder</p>
+                      <p className="font-medium">{cardName || 'YOUR NAME'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] opacity-60 uppercase">Expires</p>
+                      <p className="font-medium">{cardExpiry || 'MM/YY'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Number */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-gray-500">CARD NUMBER</Label>
+                  <Input
+                    value={cardNumber}
+                    onChange={(e) => { setCardNumber(formatCardNumber(e.target.value)); setCardErrors((p) => ({ ...p, number: '' })); }}
+                    placeholder="1234 5678 9012 3456"
+                    maxLength={19}
+                    className={cardErrors.number ? 'border-red-500' : ''}
+                  />
+                  {cardErrors.number && <p className="text-xs text-red-500">{cardErrors.number}</p>}
+                </div>
+
+                {/* Expiry + CVV */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-gray-500">EXPIRY</Label>
+                    <Input
+                      value={cardExpiry}
+                      onChange={(e) => { setCardExpiry(formatExpiry(e.target.value)); setCardErrors((p) => ({ ...p, expiry: '' })); }}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      className={cardErrors.expiry ? 'border-red-500' : ''}
+                    />
+                    {cardErrors.expiry && <p className="text-xs text-red-500">{cardErrors.expiry}</p>}
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-gray-500">CVV</Label>
+                    <Input
+                      value={cardCvv}
+                      onChange={(e) => { setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4)); setCardErrors((p) => ({ ...p, cvv: '' })); }}
+                      placeholder="•••"
+                      type="password"
+                      maxLength={4}
+                      className={cardErrors.cvv ? 'border-red-500' : ''}
+                    />
+                    {cardErrors.cvv && <p className="text-xs text-red-500">{cardErrors.cvv}</p>}
+                  </div>
+                </div>
+
+                {/* Cardholder Name */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-gray-500">CARDHOLDER NAME</Label>
+                  <Input
+                    value={cardName}
+                    onChange={(e) => { setCardName(e.target.value); setCardErrors((p) => ({ ...p, name: '' })); }}
+                    placeholder="Name on card"
+                    className={cardErrors.name ? 'border-red-500' : ''}
+                  />
+                  {cardErrors.name && <p className="text-xs text-red-500">{cardErrors.name}</p>}
+                </div>
+
+                <Button onClick={handleCardPay} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 font-bold">
+                  <Lock className="w-4 h-4 mr-2" /> Pay {formatINR(amount)}
+                </Button>
+                <p className="text-center text-[10px] text-gray-400 flex items-center justify-center gap-1">
+                  <Shield className="w-3 h-3" /> 256-bit SSL encrypted
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Net Banking Tab */}
+            <TabsContent value="netbanking" className="mt-4 px-2 pb-4">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">Select your bank to proceed</p>
+                <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+                  {banks.map((bank) => (
+                    <button
+                      key={bank}
+                      onClick={() => setSelectedBank(bank)}
+                      className={`p-3 rounded-xl border-2 text-left text-sm font-medium transition-all ${
+                        selectedBank === bank
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
+                          : 'border-gray-100 hover:border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      <Building2 className="w-4 h-4 mb-1 text-gray-400" />
+                      {bank}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  onClick={handleNetBankingPay}
+                  disabled={!selectedBank}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 font-bold disabled:opacity-50"
+                >
+                  Pay {formatINR(amount)} via {selectedBank || 'Bank'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Wallets Tab */}
+            <TabsContent value="wallets" className="mt-4 px-2 pb-4">
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500">Pay using your preferred wallet</p>
+                <div className="space-y-2">
+                  {wallets.map((wallet) => (
+                    <button
+                      key={wallet.name}
+                      onClick={() => setSelectedWallet(wallet.name)}
+                      className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 transition-all ${
+                        selectedWallet === wallet.name
+                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                          : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      <span className="text-2xl">{wallet.icon}</span>
+                      <span className="text-sm font-semibold text-gray-700">{wallet.name}</span>
+                      {selectedWallet === wallet.name && (
+                        <CheckCircle className="w-4 h-4 text-emerald-600 ml-auto" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  onClick={handleWalletPay}
+                  disabled={!selectedWallet}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 font-bold disabled:opacity-50"
+                >
+                  Pay {formatINR(amount)} via {selectedWallet || 'Wallet'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Pay Later Tab */}
+            <TabsContent value="paylater" className="mt-4 px-2 pb-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Info className="w-4 h-4" />
+                  <span>Buy now, pay later with no extra charges</span>
+                </div>
+                <div className="space-y-2">
+                  {payLaterOptions.map((opt) => (
+                    <button
+                      key={opt.name}
+                      onClick={() => setSelectedPayLater(opt.name)}
+                      className={`w-full p-3 rounded-xl border-2 flex items-center gap-3 transition-all ${
+                        selectedPayLater === opt.name
+                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                          : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                    >
+                      <span className="text-2xl">{opt.icon}</span>
+                      <span className="text-sm font-semibold text-gray-700">{opt.name}</span>
+                      {selectedPayLater === opt.name && (
+                        <CheckCircle className="w-4 h-4 text-emerald-600 ml-auto" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  onClick={handlePayLaterPay}
+                  disabled={!selectedPayLater}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 font-bold disabled:opacity-50"
+                >
+                  Pay {formatINR(amount)} via {selectedPayLater || 'Pay Later'}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Email Link Tab */}
+            <TabsContent value="email" className="mt-4 px-2 pb-4">
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <Mail className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-lg font-bold text-gray-900">Pay via Email Link</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    We&apos;ll send a secure payment link to your email
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm font-medium">Email Address</Label>
+                  <Input
+                    value={payEmail}
+                    onChange={(e) => { setPayEmail(e.target.value); setEmailError(''); }}
+                    placeholder="you@example.com"
+                    type="email"
+                    className={emailError ? 'border-red-500' : ''}
+                  />
+                  {emailError && (
+                    <p className="text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {emailError}
+                    </p>
+                  )}
+                </div>
+                <Button onClick={handleEmailPay} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 font-bold">
+                  <Mail className="w-4 h-4 mr-2" /> Send Payment Link
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 bg-gray-50 border-t flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <Shield className="w-3 h-3" />
+            <span>100% Secure Payment</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-[9px]">SSL</Badge>
+            <Badge variant="secondary" className="text-[9px]">PCI DSS</Badge>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
