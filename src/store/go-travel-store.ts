@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Page = 'home' | 'tourism' | 'flights' | 'trains' | 'buses' | 'rides' | 'rentals' | 'history';
+export type Page = 'home' | 'tourism' | 'flights' | 'trains' | 'buses' | 'rides' | 'rentals' | 'history' | 'bookings' | 'auth';
 
 interface GoTravelState {
   currentPage: Page;
