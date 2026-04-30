@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { User } from '@/lib/models';
-import { ensureDB } from '@/lib/ensure-db';
+import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    await ensureDB();
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -23,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const user = await User.findById(userId).select('-password').lean();
+    const user = await db.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -31,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       user: {
-        id: user._id.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,

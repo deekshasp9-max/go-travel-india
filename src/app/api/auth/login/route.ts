@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { User } from '@/lib/models';
-import { ensureDB } from '@/lib/ensure-db';
+import { db } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    await ensureDB();
     const body = await request.json();
     const { email, password } = body;
 
@@ -13,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
     if (!user) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
@@ -23,12 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const token = Buffer.from(`${user._id}:${Date.now()}`).toString('base64');
+    const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
 
     return NextResponse.json({
       message: 'Login successful!',
       user: {
-        id: user._id.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,

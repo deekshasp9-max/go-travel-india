@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { User } from '@/lib/models';
-import { ensureDB } from '@/lib/ensure-db';
+import { db } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    await ensureDB();
     const body = await request.json();
     const { name, email, phone, password } = body;
 
@@ -17,26 +15,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
     }
 
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await db.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) {
       return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      phone: phone || null,
-      password: hashedPassword,
+    const user = await db.user.create({
+      data: {
+        name,
+        email: email.toLowerCase(),
+        phone: phone || null,
+        password: hashedPassword,
+      },
     });
 
-    const token = Buffer.from(`${user._id}:${Date.now()}`).toString('base64');
+    const token = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
 
     return NextResponse.json({
       message: 'Account created successfully!',
       user: {
-        id: user._id.toString(),
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -47,9 +47,6 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error: any) {
     console.error('Register error:', error);
-    if (error.code === 11000) {
-      return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
-    }
     return NextResponse.json({ error: 'Registration failed. Please try again.' }, { status: 500 });
   }
 }
