@@ -25,3 +25,22 @@ Stage Summary:
   4. `src/app/globals.css` - Added CSS animation keyframes
   5. `package.json` - Removed unused `react-leaflet` dependency
   6. `src/components/client-only.tsx` - New utility for SSR-safe client rendering
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix "validateForm is not defined" error in Explore India and verify payment method
+
+Work Log:
+- Analyzed error screenshot using VLM - identified `ReferenceError: validateForm is not defined`
+- Investigated `tourism-page.tsx` - found that `validateForm` was defined inside `TourismPage` component via `useCallback` but referenced from `BookingDialog`, a separate function component in the same file
+- `BookingDialog` component's `handleSubmit` callback called `validateForm(form)` but had no access to it since it was scoped to `TourismPage`
+- Fixed by extracting `validateForm` as a standalone function at module scope (before both components)
+- Removed the duplicate `validateForm` callback from `TourismPage` component
+- Verified that `PaymentModal` is already shared between tourism and rides pages (both import from `@/components/go-travel/payment-modal`)
+- ESLint passes with no errors
+
+Stage Summary:
+- Root cause: `validateForm` was defined via `useCallback` inside `TourismPage` but referenced in `BookingDialog` which is a separate function component with no access to the parent's scope
+- Key change: Moved `validateForm` from `useCallback` inside `TourismPage` to a standalone function at module scope
+- Payment method: Both Explore India and Local Rides already use the same `PaymentModal` component with UPI, Cards, Net Banking, Wallets, Pay Later, and Email Link options

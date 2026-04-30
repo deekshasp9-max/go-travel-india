@@ -90,6 +90,21 @@ function getMinDate(): string {
   return today.toISOString().split('T')[0];
 }
 
+// Standalone validation function (used by BookingDialog)
+function validateForm(form: BookingForm): FormErrors {
+  const errors: FormErrors = {};
+  if (!form.travelDate) errors.travelDate = 'Please select a travel date';
+  if (!form.travelers || form.travelers < 1) errors.travelers = 'Select at least 1 traveler';
+  if (!form.guestName.trim()) errors.guestName = 'Please enter your name';
+  if (!form.guestEmail.trim()) errors.guestEmail = 'Please enter your email';
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.guestEmail))
+    errors.guestEmail = 'Please enter a valid email';
+  if (!form.guestPhone.trim()) errors.guestPhone = 'Please enter your phone number';
+  else if (!/^[6-9]\d{9}$/.test(form.guestPhone.replace(/\s/g, '')))
+    errors.guestPhone = 'Please enter a valid 10-digit phone number';
+  return errors;
+}
+
 // ---------------------------------------------------------------------------
 // Booking form state
 // ---------------------------------------------------------------------------
@@ -144,25 +159,7 @@ export function TourismPage() {
     setShowBooking(true);
   }, []);
 
-  // Validate booking form
-  const validateForm = useCallback(
-    (form: BookingForm): FormErrors => {
-      const errors: FormErrors = {};
-      if (!form.travelDate) errors.travelDate = 'Please select a travel date';
-      if (!form.travelers || form.travelers < 1) errors.travelers = 'Select at least 1 traveler';
-      if (!form.guestName.trim()) errors.guestName = 'Please enter your name';
-      if (!form.guestEmail.trim()) errors.guestEmail = 'Please enter your email';
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.guestEmail))
-        errors.guestEmail = 'Please enter a valid email';
-      if (!form.guestPhone.trim()) errors.guestPhone = 'Please enter your phone number';
-      else if (!/^[6-9]\d{9}$/.test(form.guestPhone.replace(/\s/g, '')))
-        errors.guestPhone = 'Please enter a valid 10-digit phone number';
-      return errors;
-    },
-    [],
-  );
-
-  // Proceed to payment — close booking dialog first, then open payment
+  // Proceed to payment
   const handleProceedToPayment = useCallback(
     (form: BookingForm, totalPrice: number, itinerary: Itinerary) => {
       // Store the booking details for after payment
