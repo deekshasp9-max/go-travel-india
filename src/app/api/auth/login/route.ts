@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import bcrypt from 'bcryptjs';
+import { auth, signInWithEmailAndPassword } from '@/lib/firebase-auth';
+import { queryCollection } from '@/lib/firebase-db';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -14,43 +13,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
-    const user = await db.user.findUnique({
-      where: { email },
-    });
+    // Sign in with Firebase Auth
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const token = await user.getIdToken();
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Generate a simple token (cuid-based)
-    const token = `gt_${user.id}_${Date.now()}`;
-
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
+    // Get user data from Firestore
+    const users = await queryCollection('users', 'email', email);
+    const userData = users.length > 0 ? users[0] : null;
 
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: {
+        id: userData?.id || user.uid,
+        uid: user.uid,
+        name: userData?.name || '',
+        email: user.email,
+        phone: userData?.phone || '',
+        role: userData?.role || 'user',
+      },
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error logging in user:', error);
     return NextResponse.json(
-      { error: 'Failed to log in' },
-      { status: 500 }
+      { error: error.message || 'Invalid email or password' },
+      { status: 401 }
     );
   }
 }

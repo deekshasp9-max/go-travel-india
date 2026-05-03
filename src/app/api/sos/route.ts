@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { addDocument, getCollection } from '@/lib/firebase-db';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { rideId, latitude, longitude, message } = body;
 
-    const alert = await db.sOSAlert.create({
-      data: {
-        rideId: rideId || null,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
-        message: message || 'SOS Alert triggered!',
-      },
+    const alert = await addDocument('sosAlerts', {
+      rideId: rideId || '',
+      latitude: parseFloat(latitude) || 0,
+      longitude: parseFloat(longitude) || 0,
+      message: message || 'SOS Alert triggered!',
     });
 
     return NextResponse.json(alert);
@@ -24,10 +22,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const alerts = await db.sOSAlert.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const alerts = await getCollection('sosAlerts');
     return NextResponse.json(alerts);
   } catch (error) {
     console.error('Error fetching SOS alerts:', error);

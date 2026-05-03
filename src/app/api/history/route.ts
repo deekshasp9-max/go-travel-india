@@ -1,25 +1,14 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getCollection } from '@/lib/firebase-db';
 
 export async function GET() {
   try {
-    const rides = await db.ride.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-    const alerts = await db.sOSAlert.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-    const itineraries = await db.savedItinerary.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const rides = await getCollection('rides');
+    const sosAlerts = await getCollection('sosAlerts');
 
     return NextResponse.json({
       rides,
-      sosAlerts: alerts,
-      savedItineraries: itineraries,
+      sosAlerts,
     });
   } catch (error) {
     console.error('Error fetching history:', error);

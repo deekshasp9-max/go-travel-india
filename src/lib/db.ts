@@ -1,13 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+// Database is now handled by Firebase (Firestore)
+// See src/lib/firebase-auth.ts for auth
+// See src/lib/firebase-db.ts for database operations
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ['error'],
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+export {};

@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { addDocument, getCollection, updateDocument } from '@/lib/firebase-db';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { rideType, pickup, destination, pickupLat, pickupLng, destLat, destLng, distance, fare, status, paymentMethod } = body;
 
-    const ride = await db.ride.create({
-      data: {
-        rideType,
-        pickup,
-        destination,
-        pickupLat: parseFloat(pickupLat),
-        pickupLng: parseFloat(pickupLng),
-        destLat: parseFloat(destLat),
-        destLng: parseFloat(destLng),
-        distance: parseFloat(distance),
-        fare: parseFloat(fare),
-        status: status || 'completed',
-        paymentMethod: paymentMethod || '',
-      },
+    const ride = await addDocument('rides', {
+      rideType,
+      pickup,
+      destination,
+      pickupLat: parseFloat(pickupLat) || 0,
+      pickupLng: parseFloat(pickupLng) || 0,
+      destLat: parseFloat(destLat) || 0,
+      destLng: parseFloat(destLng) || 0,
+      distance: parseFloat(distance) || 0,
+      fare: parseFloat(fare) || 0,
+      status: status || 'completed',
+      paymentMethod: paymentMethod || '',
     });
 
     return NextResponse.json(ride);
@@ -42,11 +40,7 @@ export async function PATCH(request: NextRequest) {
     if (paymentMethod) updateData.paymentMethod = paymentMethod;
     if (status) updateData.status = status;
 
-    const ride = await db.ride.update({
-      where: { id },
-      data: updateData,
-    });
-
+    const ride = await updateDocument('rides', id, updateData);
     return NextResponse.json(ride);
   } catch (error) {
     console.error('Error updating ride:', error);
@@ -56,10 +50,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function GET() {
   try {
-    const rides = await db.ride.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    const rides = await getCollection('rides');
     return NextResponse.json(rides);
   } catch (error) {
     console.error('Error fetching rides:', error);

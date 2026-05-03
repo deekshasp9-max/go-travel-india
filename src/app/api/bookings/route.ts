@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { addDocument, getCollection, updateDocument } from '@/lib/firebase-db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,28 +17,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const booking = await db.booking.create({
-      data: {
-        userId: userId || null,
-        itineraryId: itineraryId || '',
-        city,
-        state: state || '',
-        title,
-        image: image || '',
-        duration: duration || '',
-        budget: budget || '',
-        bestSeason: bestSeason || '',
-        rating: parseFloat(rating) || 0,
-        travelDate: travelDate || '',
-        travelers: parseInt(travelers) || 1,
-        totalPrice: parseFloat(totalPrice) || 0,
-        guestName,
-        guestEmail,
-        guestPhone,
-        paymentMethod: paymentMethod || '',
-        status: 'confirmed',
-        paymentStatus: 'pending',
-      },
+    const booking = await addDocument('bookings', {
+      userId: userId || '',
+      itineraryId: itineraryId || '',
+      city,
+      state: state || '',
+      title,
+      image: image || '',
+      duration: duration || '',
+      budget: budget || '',
+      bestSeason: bestSeason || '',
+      rating: parseFloat(rating) || 0,
+      travelDate: travelDate || '',
+      travelers: parseInt(travelers) || 1,
+      totalPrice: parseFloat(totalPrice) || 0,
+      guestName,
+      guestEmail,
+      guestPhone,
+      paymentMethod: paymentMethod || '',
+      status: 'confirmed',
+      paymentStatus: 'pending',
     });
 
     return NextResponse.json(booking);
@@ -53,10 +51,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const bookings = await db.booking.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+    const bookings = await getCollection('bookings');
     return NextResponse.json(bookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
@@ -79,14 +74,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const booking = await db.booking.update({
-      where: { id },
-      data: {
-        status: 'cancelled',
-      },
-    });
+    await updateDocument('bookings', id, { status: 'cancelled' });
 
-    return NextResponse.json(booking);
+    return NextResponse.json({ success: true, message: 'Booking cancelled' });
   } catch (error) {
     console.error('Error cancelling booking:', error);
     return NextResponse.json(

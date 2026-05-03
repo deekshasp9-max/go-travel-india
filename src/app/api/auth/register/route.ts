@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import bcrypt from 'bcryptjs';
+import { auth, createUserWithEmailAndPassword } from '@/lib/firebase-auth';
+import { addDocument, queryCollection } from '@/lib/firebase-db';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, phone, password } = body;
+    const { name, email, phone, password } = await request.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -14,47 +13,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
+    // Check if user already exists in Firestore
+    const existingUsers = await queryCollection('users', 'email', email);
+    if (existingUsers.length > 0) {
       return NextResponse.json(
         { error: 'An account with this email already exists' },
         { status: 409 }
       );
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // Create user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-    // Create user
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        phone: phone || null,
-        password: hashedPassword,
-        role: 'user',
-      },
+    // Store user data in Firestore
+    const userData = await addDocument('users', {
+      uid: user.uid,
+      name,
+      email,
+      phone: phone || '',
+      role: 'user',
     });
 
-    // Generate a simple token (cuid-based)
-    const token = `gt_${user.id}_${Date.now()}`;
-
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
+    // Get token for session
+    const token = await user.getIdToken();
 
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: {
+        id: userData.id,
+        uid: user.uid,
+        name,
+        email,
+        phone: phone || '',
+        role: 'user',
+      },
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error registering user:', error);
     return NextResponse.json(
-      { error: 'Failed to register user' },
+      { error: error.message || 'Failed to register user' },
       { status: 500 }
     );
   }

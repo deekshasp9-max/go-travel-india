@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { auth } from '@/lib/firebase-auth';
+import { queryCollection } from '@/lib/firebase-db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,38 +14,35 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Extract user ID from token (format: gt_{userId}_{timestamp})
-    const tokenParts = token.split('_');
-    if (tokenParts.length < 3 || tokenParts[0] !== 'gt') {
-      return NextResponse.json(
-        { error: 'Invalid token format' },
-        { status: 401 }
-      );
-    }
+    // Verify Firebase token
+    const decodedToken = await auth.verifyIdToken(token);
 
-    const userId = tokenParts[1];
+    // Get user data from Firestore
+    const users = await queryCollection('users', 'uid', decodedToken.uid);
+    const userData = users.length > 0 ? users[0] : null;
 
-    // Find user by ID
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
+    if (!userData) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-
-    return NextResponse.json({ user: userWithoutPassword });
-  } catch (error) {
+    return NextResponse.json({
+      user: {
+        id: userData.id,
+        uid: decodedToken.uid,
+        name: userData.name || '',
+        email: userData.email || decodedToken.email,
+        phone: userData.phone || '',
+        role: userData.role || 'user',
+      }
+    });
+  } catch (error: any) {
     console.error('Error fetching user:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
+      { error: 'Invalid or expired token' },
+      { status: 401 }
     );
   }
 }
