@@ -8,19 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 import {
-  MapPin, Plane, Train, Bus, Bike, Car, History,
-  Menu, Shield, ChevronDown, Home, Compass, CreditCard,
+  MapPin, Bike, Car, History,
+  Menu, Shield, Home, Compass,
   LogIn, LogOut, Ticket, CircleUser
 } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 
-const navItems: { id: Page; label: string; icon: React.ReactNode; mobileOnly?: boolean }[] = [
+const navItems: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Home', icon: <Home className="w-4 h-4" /> },
-  { id: 'tourism', label: 'Explore India', icon: <Compass className="w-4 h-4" /> },
-  { id: 'flights', label: 'Flights', icon: <Plane className="w-4 h-4" /> },
-  { id: 'trains', label: 'Trains', icon: <Train className="w-4 h-4" /> },
-  { id: 'buses', label: 'Buses', icon: <Bus className="w-4 h-4" /> },
+  { id: 'tourism', label: 'Tour Packages', icon: <Compass className="w-4 h-4" /> },
   { id: 'rides', label: 'Local Rides', icon: <Bike className="w-4 h-4" /> },
   { id: 'rentals', label: 'Rentals', icon: <Car className="w-4 h-4" /> },
   { id: 'history', label: 'My Records', icon: <History className="w-4 h-4" /> },
@@ -30,12 +27,10 @@ export function Header() {
   const { currentPage, setCurrentPage } = useGoTravelStore();
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [travelDropdown, setTravelDropdown] = useState(false);
 
   const navigate = (page: Page) => {
     setCurrentPage(page);
     setMobileOpen(false);
-    setTravelDropdown(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -66,7 +61,7 @@ export function Header() {
 
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navItems.slice(0, 6).map((item) => (
+              {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => navigate(item.id)}
@@ -79,44 +74,6 @@ export function Header() {
                   <span className="flex items-center gap-1.5">{item.icon}{item.label}</span>
                 </button>
               ))}
-
-              {/* Travel Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setTravelDropdown(!travelDropdown)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
-                    ['flights', 'trains', 'buses', 'rentals', 'history'].includes(currentPage)
-                      ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4" />
-                  More
-                  <ChevronDown className={`w-3 h-3 transition-transform ${travelDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {travelDropdown && (
-                    <div
-                      className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50 animate-fade-in"
-                    >
-                      {[
-                        { id: 'trains' as Page, label: 'Trains', icon: <Train className="w-4 h-4" /> },
-                        { id: 'buses' as Page, label: 'Buses', icon: <Bus className="w-4 h-4" /> },
-                        { id: 'rentals' as Page, label: 'Rentals', icon: <Car className="w-4 h-4" /> },
-                        { id: 'history' as Page, label: 'My Records', icon: <History className="w-4 h-4" /> },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => navigate(item.id)}
-                          className={`w-full px-4 py-2.5 text-sm flex items-center gap-2.5 hover:bg-gray-50 transition-colors ${
-                            currentPage === item.id ? 'text-emerald-600 bg-emerald-50' : 'text-gray-700'
-                          }`}
-                        >
-                          {item.icon}{item.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-              </div>
             </nav>
 
             {/* Right side: Auth + Bookings */}
@@ -254,7 +211,7 @@ export function Header() {
         <div className="flex items-center justify-around py-1.5 px-1">
           {[
             { id: 'home' as Page, label: 'Home', icon: <Home className="w-5 h-5" /> },
-            { id: 'tourism' as Page, label: 'Explore', icon: <Compass className="w-5 h-5" /> },
+            { id: 'tourism' as Page, label: 'Packages', icon: <Compass className="w-5 h-5" /> },
             { id: 'rides' as Page, label: 'Rides', icon: <Bike className="w-5 h-5" /> },
             { id: 'rentals' as Page, label: 'Rent', icon: <Car className="w-5 h-5" /> },
             { id: 'history' as Page, label: 'Records', icon: <History className="w-5 h-5" /> },

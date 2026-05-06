@@ -7,9 +7,6 @@ import { Header } from '@/components/go-travel/header';
 import { Footer } from '@/components/go-travel/footer';
 import { HomePage } from '@/components/go-travel/home-page';
 import { TourismPage } from '@/components/go-travel/tourism-page';
-import { FlightsPage } from '@/components/go-travel/flights-page';
-import { TrainsPage } from '@/components/go-travel/trains-page';
-import { BusesPage } from '@/components/go-travel/buses-page';
 import { RidesPage } from '@/components/go-travel/rides-page';
 import { RentalsPage } from '@/components/go-travel/rentals-page';
 import { HistoryPage } from '@/components/go-travel/history-page';
@@ -31,12 +28,6 @@ export default function GoTravelApp() {
         return <HomePage />;
       case 'tourism':
         return <TourismPage />;
-      case 'flights':
-        return <FlightsPage />;
-      case 'trains':
-        return <TrainsPage />;
-      case 'buses':
-        return <BusesPage />;
       case 'rides':
         return <RidesPage />;
       case 'rentals':

@@ -4,8 +4,8 @@ import { useGoTravelStore } from '@/store/go-travel-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  MapPin, Plane, Train, Bus, Bike, Car, Shield, Star,
-  ArrowRight, ChevronRight, Sparkles, TrendingUp
+  MapPin, Bike, Car, Shield, Star,
+  ArrowRight, ChevronRight, Sparkles, TrendingUp, Compass
 } from 'lucide-react';
 
 const destinations = [
@@ -24,16 +24,16 @@ const destinations = [
 ];
 
 const features = [
-  { icon: <Plane className="w-6 h-6" />, title: 'Flight Prices', desc: 'Compare 50+ airlines', color: 'from-orange-100 to-amber-50', iconColor: 'text-orange-600' },
-  { icon: <Train className="w-6 h-6" />, title: 'Train Tickets', desc: 'IRCTC partner prices', color: 'from-blue-100 to-sky-50', iconColor: 'text-blue-600' },
-  { icon: <Bus className="w-6 h-6" />, title: 'Bus Booking', desc: 'RedBus & more', color: 'from-green-100 to-emerald-50', iconColor: 'text-green-600' },
-  { icon: <Bike className="w-6 h-6" />, title: 'Local Rides', desc: 'Bike, Auto & Car', color: 'from-purple-100 to-fuchsia-50', iconColor: 'text-purple-600' },
+  { icon: <Compass className="w-6 h-6" />, title: 'Tour Packages', desc: 'Curated Indian trips', color: 'from-orange-100 to-amber-50', iconColor: 'text-orange-600', page: 'tourism' as const },
+  { icon: <Bike className="w-6 h-6" />, title: 'Local Rides', desc: 'Bike, Auto & Car', color: 'from-purple-100 to-fuchsia-50', iconColor: 'text-purple-600', page: 'rides' as const },
+  { icon: <Car className="w-6 h-6" />, title: 'Vehicle Rentals', desc: 'Self-drive & with driver', color: 'from-green-100 to-emerald-50', iconColor: 'text-green-600', page: 'rentals' as const },
+  { icon: <Shield className="w-6 h-6" />, title: "Women's Safety", desc: 'SOS with GPS tracking', color: 'from-rose-100 to-pink-50', iconColor: 'text-rose-600', page: 'rides' as const },
 ];
 
 export function HomePage() {
   const { setCurrentPage } = useGoTravelStore();
 
-  const navigate = (page: 'tourism' | 'flights' | 'trains' | 'buses' | 'rides' | 'rentals') => {
+  const navigate = (page: 'tourism' | 'rides' | 'rentals') => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -60,7 +60,7 @@ export function HomePage() {
               </span>
             </h1>
             <p className="mt-4 text-lg sm:text-xl text-emerald-100 max-w-xl leading-relaxed">
-              Discover breathtaking destinations, compare travel prices, and book local rides — all in one place.
+              Discover breathtaking destinations with curated tour packages and book local rides — all in one place.
             </p>
 
             {/* Quick Search Bar */}
@@ -115,12 +115,7 @@ export function HomePage() {
             >
               <Card
                 className={`cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br ${feature.color} group`}
-                onClick={() => {
-                  if (i === 0) navigate('flights');
-                  else if (i === 1) navigate('trains');
-                  else if (i === 2) navigate('buses');
-                  else navigate('rides');
-                }}
+                onClick={() => navigate(feature.page)}
               >
                 <CardContent className="p-4 sm:p-5">
                   <div className={`${feature.iconColor} mb-3`}>{feature.icon}</div>
@@ -139,7 +134,7 @@ export function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Popular Destinations</h2>
-            <p className="text-gray-500 mt-1">Curated itineraries for your next trip</p>
+            <p className="text-gray-500 mt-1">Curated tour packages for your next trip</p>
           </div>
           <Button variant="ghost" onClick={() => navigate('tourism')} className="text-emerald-600 font-semibold">
             View All <ArrowRight className="w-4 h-4 ml-1" />
