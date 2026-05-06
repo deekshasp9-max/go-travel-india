@@ -25,7 +25,7 @@ export function Footer() {
               <span className="text-lg font-bold text-white">Go Travel</span>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed">
-              India&apos;s comprehensive travel platform. Explore, compare, and ride — all in one place.
+              India&apos;s comprehensive travel platform. Explore tour packages and book local rides — all in one place.
             </p>
           </div>
 
@@ -33,10 +33,10 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">Explore</h3>
             <ul className="space-y-2 text-sm">
-              <li><button onClick={() => navigate('tourism')} className="hover:text-emerald-400 transition-colors">Tourism</button></li>
-              <li><button onClick={() => navigate('flights')} className="hover:text-emerald-400 transition-colors">Flights</button></li>
-              <li><button onClick={() => navigate('trains')} className="hover:text-emerald-400 transition-colors">Trains</button></li>
-              <li><button onClick={() => navigate('buses')} className="hover:text-emerald-400 transition-colors">Buses</button></li>
+              <li><button onClick={() => navigate('tourism')} className="hover:text-emerald-400 transition-colors">Tour Packages</button></li>
+              <li><button onClick={() => navigate('rides')} className="hover:text-emerald-400 transition-colors">Local Rides</button></li>
+              <li><button onClick={() => navigate('rentals')} className="hover:text-emerald-400 transition-colors">Vehicle Rentals</button></li>
+              <li><button onClick={() => navigate('history')} className="hover:text-emerald-400 transition-colors">My Records</button></li>
             </ul>
           </div>
 
@@ -44,10 +44,10 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-white mb-3">Services</h3>
             <ul className="space-y-2 text-sm">
-              <li><button onClick={() => navigate('rides')} className="hover:text-emerald-400 transition-colors">Local Rides</button></li>
-              <li><button onClick={() => navigate('rentals')} className="hover:text-emerald-400 transition-colors">Vehicle Rentals</button></li>
-              <li><button onClick={() => navigate('history')} className="hover:text-emerald-400 transition-colors">My Records</button></li>
               <li><span className="flex items-center gap-1"><Shield className="w-3 h-3 text-emerald-400" /> Women&apos;s Safety</span></li>
+              <li><span className="flex items-center gap-1"><Globe className="w-3 h-3 text-emerald-400" /> GPS Tracking</span></li>
+              <li><button onClick={() => navigate('bookings')} className="hover:text-emerald-400 transition-colors">My Bookings</button></li>
+              <li><button onClick={() => navigate('auth')} className="hover:text-emerald-400 transition-colors">Login / Sign Up</button></li>
             </ul>
           </div>
 
