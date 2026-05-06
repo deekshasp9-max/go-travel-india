@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Go Travel — India's Travel Companion",
-  description: "Explore India's best destinations, compare flights/trains/buses, and book local rides with real-time GPS tracking. Tourism, travel & mobility — all in one platform.",
-  keywords: ["Go Travel", "India travel", "tourism India", "flight comparison", "train booking", "bus booking", "local rides", "GPS tracking", "women safety", "IRCTC", "RedBus"],
+  description: "Explore India's best destinations with curated tour packages and book local rides with real-time GPS tracking. Tourism, travel & mobility — all in one platform.",
+  keywords: ["Go Travel", "India travel", "tourism India", "tour packages", "local rides", "GPS tracking", "women safety", "vehicle rentals"],
   authors: [{ name: "Go Travel" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
@@ -43,6 +43,7 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        suppressHydrationWarning
       >
         {children}
         <Toaster />
